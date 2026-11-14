@@ -9,7 +9,7 @@ const titles=new Set(),descriptions=new Set(),docs=new Map();
 for(const file of pages){
  const path='/'+relative(root,file).replaceAll('\\','/').replace(/index\.html$/,'');
  const doc=parse(readFileSync(file,'utf8'));docs.set(path,doc);
- assert.equal(doc.querySelector('html').getAttribute('lang'),'en',path);
+ assert.equal(doc.querySelector('html').getAttribute('lang'),'zh-CN',path);
  assert.equal(doc.querySelectorAll('link[rel=canonical]').length,1,path);
  assert.equal(doc.querySelector('link[rel=canonical]').getAttribute('href'),'https://resumv.com'+(path==='/404.html'?'/404/':path==='/cv/'?'/builder/':path),path);
  for(const script of doc.querySelectorAll('script[type="application/ld+json"]')) JSON.parse(script.textContent);

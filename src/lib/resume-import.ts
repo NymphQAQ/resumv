@@ -4,13 +4,13 @@ export const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_TEXT = 250_000;
 export function validateResumeFile(file: Pick<File, 'name' | 'size'>) {
   const type = file.name.split('.').pop()?.toLowerCase();
-  if (!['pdf','docx','txt'].includes(type || '')) throw Error('Choose a PDF, DOCX, or TXT file. Older .doc files must be saved as .docx first.');
-  if (!file.size) throw Error('This file is empty. Choose another file.');
-  if (file.size > MAX_FILE_BYTES) throw Error('Choose a file smaller than 10 MB.');
+  if (!['pdf','docx','txt'].includes(type || '')) throw Error('请选择 PDF、DOCX 或 TXT 文件。旧版 .doc 文件请先另存为 .docx。');
+  if (!file.size) throw Error('文件为空，请选择其他文件。');
+  if (file.size > MAX_FILE_BYTES) throw Error('请选择小于 10 MB 的文件。');
   return type!;
 }
 export function cleanExtractedText(text: string) {
-  if (text.length > MAX_TEXT) throw Error('This document contains too much text. Import a shorter resume.');
+  if (text.length > MAX_TEXT) throw Error('文档文本过多，请导入更短的简历。');
   return text.replace(/\u0000/g,'').replace(/\r\n?/g,'\n').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
 }
 export function extractDocxText(bytes: Uint8Array) {
@@ -18,10 +18,10 @@ export function extractDocxText(bytes: Uint8Array) {
   const files = unzipSync(bytes, {filter: entry => {
     if (!/^word\/(document|header\d*|footer\d*)\.xml$/.test(entry.name)) return false;
     total += entry.originalSize;
-    if (total > 8 * 1024 * 1024) throw Error('The expanded document is too large. Save a shorter copy.');
+    if (total > 8 * 1024 * 1024) throw Error('文档解压后体积过大，请另存一份更短的文档。');
     return true;
   }});
-  if (!files['word/document.xml']) throw Error('This is not a readable DOCX file. Save it again in Word or export a PDF.');
+  if (!files['word/document.xml']) throw Error('无法读取此 DOCX 文件，请用 Word 重新保存或导出为 PDF。');
   const parts = Object.keys(files).sort((a,b) => {
     const order = (s:string) => s.includes('/header') ? 0 : s.includes('/document') ? 1 : 2;
     return order(a)-order(b) || a.localeCompare(b);
@@ -29,9 +29,9 @@ export function extractDocxText(bytes: Uint8Array) {
   const paragraphs: string[] = [];
   for (const path of parts) {
     const xml = strFromU8(files[path]);
-    if (/<!DOCTYPE|<!ENTITY/i.test(xml)) throw Error('This DOCX contains unsupported XML. Export a PDF or plain text instead.');
+    if (/<!DOCTYPE|<!ENTITY/i.test(xml)) throw Error('此 DOCX 包含不受支持的 XML，请导出 PDF 或纯文本后再导入。');
     const doc = new DOMParser().parseFromString(xml,'application/xml');
-    if (doc.getElementsByTagName('parsererror').length) throw Error('This DOCX is damaged. Save a new copy and try again.');
+    if (doc.getElementsByTagName('parsererror').length) throw Error('此 DOCX 文件已损坏，请另存一份后重试。');
     const ns = doc.documentElement.namespaceURI || 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
     const read = (node:Node):string => {
       if (node.nodeType !== 1) return '';
@@ -80,7 +80,7 @@ export async function importResumeFile(file: File, progress: (message:string)=>v
   if(type==='txt') text=cleanExtractedText(await file.text());
   if(type==='docx') {
     try {text=extractDocxText(new Uint8Array(await file.arrayBuffer()));}
-    catch(e) {throw Error(e instanceof Error && /DOCX|document|XML/.test(e.message) ? e.message : 'Could not read this DOCX. It may be damaged or password-protected. Save an unlocked copy and try again.');}
+    catch(e) {throw Error(e instanceof Error && /DOCX|文档|XML/.test(e.message) ? e.message : '无法读取此 DOCX，文件可能已损坏或受密码保护。请另存为未加密的副本后重试。');}
   }
   if(type==='pdf') {
     const pdfjs=await import('pdfjs-dist');
@@ -89,28 +89,28 @@ export async function importResumeFile(file: File, progress: (message:string)=>v
     const task=pdfjs.getDocument({data:await file.arrayBuffer(),useSystemFonts:true});
     try {
       const pdf=await task.promise;
-      if(pdf.numPages>50) throw Error('This PDF has more than 50 pages. Import only the resume pages.');
+      if(pdf.numPages>50) throw Error('此 PDF 超过 50 页，请仅导入简历相关页面。');
       const pages:string[]=[];let empty=0;
       for(let number=1;number<=pdf.numPages;number++) {
-        progress(`Reading PDF page ${number} of ${pdf.numPages}…`);
+        progress(`正在读取 PDF，第 ${number} 页，共 ${pdf.numPages} 页…`);
         const page=await pdf.getPage(number);
         const content=await page.getTextContent();
         const value=pdfItemsToText(content.items);
         if(!value.trim()) empty++;
         pages.push(value);page.cleanup();
-        if(pages.join('\n').length>MAX_TEXT) throw Error('This PDF contains too much text. Import a shorter resume.');
+        if(pages.join('\n').length>MAX_TEXT) throw Error('此 PDF 文本过多，请导入更短的简历。');
       }
       text=cleanExtractedText(pages.join('\n\n'));
-      if(!text) throw Error('No selectable text found. This PDF may be scanned. OCR is not available here; use a text-based PDF, DOCX, or paste your resume text.');
-      if(empty) warnings.push(`${empty} page(s) had no selectable text and may contain scanned content.`);
-      warnings.push('Check the extracted reading order, especially for columns and tables.');
+      if(!text) throw Error('未找到可选中的文字。扫描版 PDF 请先做文字识别，也可导入含文本的 PDF、DOCX，或直接粘贴简历文字。');
+      if(empty) warnings.push(`有 ${empty} 页未找到可选中的文字，可能是扫描页。`);
+      warnings.push('请核对提取后的阅读顺序，尤其是分栏和表格。');
     } catch(e) {
-      if(e instanceof Error && e.name==='PasswordException') throw Error('This PDF is password-protected. Import an unlocked copy.');
-      if(e instanceof Error && e.name==='InvalidPDFException') throw Error('This PDF is damaged or invalid. Export a new PDF and try again.');
-      if(e instanceof Error && /PDF|resume/.test(e.message)) throw e;
-      throw Error('Could not read this PDF. It may be damaged. Export a new copy and try again.');
+      if(e instanceof Error && e.name==='PasswordException') throw Error('此 PDF 受密码保护，请导入未加密的副本。');
+      if(e instanceof Error && e.name==='InvalidPDFException') throw Error('此 PDF 已损坏或格式无效，请重新导出后重试。');
+      if(e instanceof Error && /PDF|简历/.test(e.message)) throw e;
+      throw Error('无法读取此 PDF，文件可能已损坏，请重新导出后重试。');
     } finally {await task.destroy();}
   }
-  if(!text) throw Error('No readable text found. Use a text-based document or paste your resume.');
+  if(!text) throw Error('未找到可读取的文字，请使用含文本的文档，或直接粘贴简历内容。');
   return {text,warnings};
 }

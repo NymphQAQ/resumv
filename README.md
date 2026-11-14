@@ -124,7 +124,7 @@ scripts/                    Utilities such as template preview generation
 tests/                      Data, export, and static page checks
 ```
 
-The editor interface is in English. PDF previews and exports use a bundled Noto Sans CJK fallback for Simplified and Traditional Chinese text. Migration from Reactive Resume v4 JSON is also not supported yet.
+The editor interface is available in Simplified Chinese. PDF previews and exports use a bundled Noto Sans CJK fallback for Simplified and Traditional Chinese text. Migration from Reactive Resume v4 JSON is also not supported yet.
 
 ## License
 

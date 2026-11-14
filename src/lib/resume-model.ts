@@ -198,7 +198,7 @@ export function sanitizeResume(input: unknown): ResumeData {
   d.basics.customFields.forEach((f) => (f.link = safeUrl(f.link)));
   for (const section of [...Object.values(d.sections), ...d.customSections]) {
     if (section.items.length > 100)
-      throw Error("A section can contain at most 100 entries.");
+      throw Error("每个章节最多包含 100 个条目。");
     for (const item of section.items as Record<string, any>[]) {
       for (const key of ["description", "content", "recipient"])
         if (typeof item[key] === "string") item[key] = cleanHtml(item[key]);
@@ -227,7 +227,7 @@ export function sanitizeResume(input: unknown): ResumeData {
       defaultResumeData.metadata.layout.pages,
     );
   if (d.metadata.layout.pages.length > 20)
-    throw Error("A resume can contain at most 20 layout pages.");
+    throw Error("一份简历最多可设置 20 组页面布局。");
   for (const p of d.metadata.layout.pages) {
     for (const col of ["main", "sidebar"] as const)
       p[col] = p[col].filter((id) => {
@@ -263,7 +263,7 @@ export function readStorage(): Record<string, any>[] {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return [];
   const docs = JSON.parse(raw);
-  if (!Array.isArray(docs)) throw Error("Saved data is not a document list.");
+  if (!Array.isArray(docs)) throw Error("已保存的数据不是有效的文档列表。");
   return docs.filter(
     (d) =>
       d &&

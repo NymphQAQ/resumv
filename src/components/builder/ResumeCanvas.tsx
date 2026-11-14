@@ -49,8 +49,8 @@ export default function ResumeCanvas({
 
   function reportError(error: unknown) {
     console.error("Resume rendering failed", error);
-    setError("The preview could not be generated. Check your content or choose another template.");
-    onStatusRef.current("Preview unavailable");
+    setError("无法生成预览，请检查简历内容或尝试切换模板。");
+    onStatusRef.current("预览不可用");
     setBusy(false);
   }
 
@@ -59,7 +59,7 @@ export default function ResumeCanvas({
     setBusy(true);
     setError("");
     onBlobRef.current(null);
-    onStatusRef.current("Updating preview");
+    onStatusRef.current("正在更新预览");
     let loadingTask: PDFDocumentLoadingTask | undefined;
     const timeout = setTimeout(async () => {
       try {
@@ -109,7 +109,7 @@ export default function ResumeCanvas({
           canvas.width = Math.ceil(viewport.width);
           canvas.height = Math.ceil(viewport.height);
           canvas.setAttribute("role", "img");
-          canvas.setAttribute("aria-label", `Resume preview, page ${i}`);
+          canvas.setAttribute("aria-label", `简历预览，第 ${i} 页`);
           renderTask = page.render({ canvas, viewport });
           await renderTask.promise;
           const wrap = document.createElement("div");
@@ -117,7 +117,7 @@ export default function ResumeCanvas({
           wrap.append(canvas);
           const label = document.createElement("span");
           label.className = "sheet-page-number";
-          label.textContent = `Page ${i} of ${pdf.numPages}`;
+          label.textContent = `第 ${i} 页，共 ${pdf.numPages} 页`;
           wrap.append(label);
           fragment.append(wrap);
         }
@@ -129,7 +129,7 @@ export default function ResumeCanvas({
         );
         onBlobRef.current(blob);
         onStatusRef.current(
-          `${pdf.numPages} ${pdf.numPages === 1 ? "page" : "pages"}`,
+          `共 ${pdf.numPages} 页`,
         );
         setError("");
         setBusy(false);
@@ -149,7 +149,7 @@ export default function ResumeCanvas({
       <div className="canvas-render-status" role="status">
         {busy && (
           <>
-            <LoaderCircle size={14} className="spin" /> Updating preview…
+            <LoaderCircle size={14} className="spin" /> 正在更新预览…
           </>
         )}
       </div>
@@ -160,7 +160,7 @@ export default function ResumeCanvas({
         </div>
       )}
       <div ref={container} className="pdf-pages" aria-busy={busy} />
-      <div className="sr-only" aria-label="Resume text">
+      <div className="sr-only" aria-label="简历文本">
         {exportText(data)}
       </div>
     </>

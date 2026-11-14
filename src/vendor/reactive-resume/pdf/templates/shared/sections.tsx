@@ -56,6 +56,7 @@ import {
 	useTemplateStyle,
 } from "./context";
 import { filterItems, hasVisibleItems, isSectionVisible, isVisibleSummary } from "./filtering";
+import { resolveStyleFontSize } from "./icon-size";
 import { LevelDisplay } from "./level-display";
 import { getTemplateMetrics } from "./metrics";
 import {
@@ -317,6 +318,7 @@ const SectionShell = ({ sectionId, title, showHeading = true, children }: Sectio
 	const sectionStyle = useTemplateStyle("section");
 	const sectionRuleStyle = useSectionStyleRule("section");
 	const sectionHeadingStyle = useTemplateStyle("sectionHeading");
+	const baseHeadingStyle = useTemplateStyle("heading");
 	const sectionHeadingContainerStyle = useTemplateStyle("sectionHeadingContainer");
 	const sectionHeadingRuleStyle = useSectionStyleRule("heading");
 	const sectionTitle = getResumeSectionTitle(data, sectionId, title);
@@ -357,6 +359,12 @@ const SectionShell = ({ sectionId, title, showHeading = true, children }: Sectio
 		);
 	}
 
+	const headingFontSize = resolveStyleFontSize(baseHeadingStyle, sectionHeadingRuleStyle, sectionHeadingStyle)
+		?? data.metadata.typography.heading.fontSize;
+	// React PDF puts extra line height below the glyphs. Center the icon on the
+	// first line's visible text using a line box proportional to the heading size.
+	const iconLineStyle: Style = { height: headingFontSize * 1.3, justifyContent: "center" };
+
 	// With icon: wrap in a flex row container that inherits the heading's border/decoration
 	return (
 		<SemanticNodeKeyProvider nodeKey={sectionNodeKey}>
@@ -372,10 +380,12 @@ const SectionShell = ({ sectionId, title, showHeading = true, children }: Sectio
 							sectionHeadingResolved.style,
 						)}
 					>
-						<SectionHeadingIcon
-							nodeKey={semanticNodeKeys.icon(sectionHeadingNodeKey, "section")}
-							name={sectionIcon as IconName}
-						/>
+						<View style={iconLineStyle}>
+							<SectionHeadingIcon
+								nodeKey={semanticNodeKeys.icon(sectionHeadingNodeKey, "section")}
+								name={sectionIcon as IconName}
+							/>
+						</View>
 						<Heading
 							bindSemanticNode={false}
 							style={getSectionHeadingTextStyle(

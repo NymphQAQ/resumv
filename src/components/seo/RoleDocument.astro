@@ -9,8 +9,8 @@ const template = reactiveTemplates.find(t => t.id === r.template)!;
 const skills = r.skills.split(', ');
 ---
 <div class="role-resume-stage">
-  <div class="role-resume-caption"><span>Inspired by {template.name}</span><span>{blank ? 'YOUR NEXT CHAPTER' : 'RESUME EXAMPLE'}</span></div>
-  <article class:list={['role-document', 'role-document-designed', {'role-document-blank':blank}]} style={`--resume-accent:${template.color}`} aria-label={blank?`${r.title} fill-in resume template`:`${r.title} full resume example`}>
+  <div class="role-resume-caption"><span>采用 {template.name} 版式</span><span>{blank ? '待填写模板' : '英文简历示例'}</span></div>
+  <article class:list={['role-document', 'role-document-designed', {'role-document-blank':blank}]} style={`--resume-accent:${template.color}`} lang="en" aria-label={blank?`${r.title} fill-in resume template`:`${r.title} full resume example`}>
     <header>
       <h2>{blank?'[Your name]':'Jordan Taylor'}</h2>
       <p class="role-document-title">{r.title}</p>

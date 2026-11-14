@@ -4,7 +4,7 @@ import { cleanHtml } from "../../lib/resume-model";
 export default function RichText({
   value,
   onChange,
-  label = "Description",
+  label = "描述",
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -30,14 +30,14 @@ export default function RichText({
       <div
         className="rich-toolbar"
         role="toolbar"
-        aria-label={`${label} formatting`}
+        aria-label={`${label}格式工具栏`}
       >
         {[
-          ["bold", Bold, "Bold"],
-          ["italic", Italic, "Italic"],
-          ["underline", Underline, "Underline"],
-          ["insertUnorderedList", List, "Bullet list"],
-          ["insertOrderedList", ListOrdered, "Numbered list"],
+          ["bold", Bold, "加粗"],
+          ["italic", Italic, "斜体"],
+          ["underline", Underline, "下划线"],
+          ["insertUnorderedList", List, "无序列表"],
+          ["insertOrderedList", ListOrdered, "编号列表"],
         ].map(([cmd, Icon, title]) => {
           const I = Icon as typeof Bold;
           return (

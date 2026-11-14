@@ -13,15 +13,15 @@ test('extracts real DOCX paragraphs, tables and contact header without merging t
 test('imports TXT and rejects unsupported, empty and oversized files',async()=>{
  expect((await importResumeFile(new File(['Jordan Taylor\r\nSkills\r\nSQL'], 'RESUME.TXT'))).text).toBe('Jordan Taylor\nSkills\nSQL');
  expect(()=>validateResumeFile({name:'resume.doc',size:100})).toThrow('DOCX');
- expect(()=>validateResumeFile({name:'resume.pdf',size:0})).toThrow('empty');
+ expect(()=>validateResumeFile({name:'resume.pdf',size:0})).toThrow('文件为空');
  expect(()=>validateResumeFile({name:'resume.docx',size:11*1024*1024})).toThrow('10 MB');
 });
 test('rejects damaged and over-expanded DOCX data',()=>{
  expect(()=>extractDocxText(new Uint8Array([1,2,3]))).toThrow();
  const oversized=zipSync({'word/document.xml':strToU8('a'.repeat(9*1024*1024))});
- expect(()=>extractDocxText(oversized)).toThrow('too large');
+ expect(()=>extractDocxText(oversized)).toThrow('体积过大');
  const malformed=zipSync({'word/document.xml':strToU8('<broken>')});
- expect(()=>extractDocxText(malformed)).toThrow('damaged');
+ expect(()=>extractDocxText(malformed)).toThrow('已损坏');
 });
 test('keeps PDF words and lines readable, including split email runs',()=>{
  const item=(str,x,y,width,hasEOL=false)=>({str,transform:[10,0,0,10,x,y],width,height:10,hasEOL});

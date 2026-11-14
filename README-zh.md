@@ -124,7 +124,7 @@ scripts/                     模板预览生成等辅助脚本
 tests/                       数据、导出和静态页面检查
 ```
 
-编辑器界面为英文。PDF 预览和导出内置 Noto Sans CJK 回退字体，支持简体和繁体中文。Reactive Resume v4 JSON 迁移暂未支持。
+编辑器界面为简体中文。PDF 预览和导出内置 Noto Sans CJK 回退字体，支持简体和繁体中文。Reactive Resume v4 JSON 迁移暂未支持。
 
 ## 许可证
 

@@ -32,11 +32,11 @@ export default function ProjectFooter() {
     void latestCommit().then(value => { if (active) setSha(value); });
     return () => { active = false; };
   }, []);
-  return <footer className="project-footer" aria-label="Project information">
-    <span>Powered By <a href="https://resumv.com" target="_blank" rel="noopener noreferrer">Resumv.com</a></span>
+  return <footer className="project-footer" aria-label="项目信息">
+    <span>由 <a href="https://resumv.com" target="_blank" rel="noopener noreferrer">Resumv.com</a> 提供支持</span>
     <a href={sha ? `${repository}/commit/${sha}` : `${repository}/commits/main/`}
-      target="_blank" rel="noopener noreferrer" title={sha ? `Latest GitHub commit on main: ${sha}` : 'View the latest commits on GitHub'}>
-      Latest commit <code>{sha ? sha.slice(0, 7) : 'GitHub ↗'}</code>
+      target="_blank" rel="noopener noreferrer" title={sha ? `GitHub 主分支的最新提交 ${sha}` : '在 GitHub 查看最新提交'}>
+      最新提交 <code>{sha ? sha.slice(0, 7) : 'GitHub ↗'}</code>
     </a>
   </footer>;
 }

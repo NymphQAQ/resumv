@@ -53,6 +53,7 @@ test('keyword mapping preserves the requested measured thresholds',()=>{
  for(const r of rows){expect(r.volume_us_monthly).toBeGreaterThanOrEqual(1000);expect(r.kd).toBeLessThan(29);}
 });
 test('summary drafts use supplied evidence and distinguish entry-level intent',()=>{
+ expect(draftSummary('数据分析师','SQL','实现周报自动化。',false,'zh-CN')).toBe('职业方向为数据分析师，擅长SQL。实现周报自动化。');
  expect(draftSummary('Data analyst','SQL and Excel','Validated 12 reports.')).toBe('Data analyst with experience in SQL and Excel. Validated 12 reports.');
  const entry=draftSummary('Data analyst','SQL','Completed a class project',true);
  expect(entry).toStartWith('Seeking a role as a Data analyst');

@@ -52,12 +52,12 @@ import {
   readStorage,
   writeResume,
   emptyItem,
-  sectionNames,
   downloadBlob,
   exportText,
   textToHtml,
   type ResumeData,
 } from "../../lib/resume-model";
+import { roleLabels, sectionLabels } from "../../data/ui-labels";
 import { reactiveTemplates } from "../../data/templates";
 import { examples } from "../../data/content";
 import { createTemplateResume } from "../../lib/template-resume";
@@ -70,6 +70,11 @@ import "../../styles/builder.css";
 
 type SectionKey = keyof ResumeData["sections"];
 type LayoutColumn = "main" | "sidebar";
+const sectionLabel = (id: string, section?: { title: string; type?: string }) => {
+  if (id === "basics") return "个人资料";
+  if (section?.type === "cover-letter" && (!section.title || section.title === "Cover Letter")) return "求职信";
+  return section?.title || sectionLabels[id] || "自定义章节";
+};
 const icons: Record<string, typeof UserRound> = {
   basics: UserRound,
   summary: FileText,
@@ -88,64 +93,64 @@ const icons: Record<string, typeof UserRound> = {
 };
 const fields: Record<string, [string, string][]> = {
   experience: [
-    ["company", "Company"],
-    ["position", "Position"],
-    ["location", "Location"],
-    ["period", "Date range"],
+    ["company", "公司"],
+    ["position", "职位"],
+    ["location", "所在地"],
+    ["period", "起止时间"],
   ],
   education: [
-    ["school", "School"],
-    ["degree", "Degree"],
-    ["area", "Area of study"],
-    ["grade", "Grade / GPA"],
-    ["location", "Location"],
-    ["period", "Date range"],
+    ["school", "学校"],
+    ["degree", "学位"],
+    ["area", "专业"],
+    ["grade", "成绩 / GPA"],
+    ["location", "所在地"],
+    ["period", "起止时间"],
   ],
   projects: [
-    ["name", "Project name"],
-    ["period", "Date range"],
+    ["name", "项目名称"],
+    ["period", "起止时间"],
   ],
   skills: [
-    ["name", "Skill group"],
-    ["proficiency", "Proficiency"],
-    ["keywords", "Keywords, separated by commas"],
+    ["name", "技能分类"],
+    ["proficiency", "熟练程度"],
+    ["keywords", "关键词，用逗号分隔"],
   ],
   languages: [
-    ["language", "Language"],
-    ["fluency", "Fluency"],
+    ["language", "语言"],
+    ["fluency", "流利程度"],
   ],
   profiles: [
-    ["network", "Network"],
-    ["username", "Username"],
+    ["network", "平台"],
+    ["username", "用户名"],
   ],
   interests: [
-    ["name", "Interest"],
-    ["keywords", "Keywords, separated by commas"],
+    ["name", "兴趣"],
+    ["keywords", "关键词，用逗号分隔"],
   ],
   awards: [
-    ["title", "Award title"],
-    ["awarder", "Awarded by"],
-    ["date", "Date"],
+    ["title", "奖项名称"],
+    ["awarder", "颁奖机构"],
+    ["date", "日期"],
   ],
   certifications: [
-    ["title", "Certification"],
-    ["issuer", "Issuer"],
-    ["date", "Date"],
+    ["title", "证书名称"],
+    ["issuer", "发证机构"],
+    ["date", "日期"],
   ],
   publications: [
-    ["title", "Publication title"],
-    ["publisher", "Publisher"],
-    ["date", "Date"],
+    ["title", "出版物名称"],
+    ["publisher", "出版机构"],
+    ["date", "日期"],
   ],
   volunteer: [
-    ["organization", "Organization"],
-    ["location", "Location"],
-    ["period", "Date range"],
+    ["organization", "组织"],
+    ["location", "所在地"],
+    ["period", "起止时间"],
   ],
   references: [
-    ["name", "Name"],
-    ["position", "Position"],
-    ["phone", "Phone"],
+    ["name", "姓名"],
+    ["position", "职位"],
+    ["phone", "电话"],
   ],
 };
 const hasDescription = new Set([
@@ -160,7 +165,7 @@ const hasDescription = new Set([
 ]);
 const makeId = () => crypto.randomUUID();
 const safeFilename = (s: string) =>
-  s.replace(/[^\p{L}\p{N}\s_-]/gu, "").trim() || "resume";
+  s.replace(/[^\p{L}\p{N}\s_-]/gu, "").trim() || "简历";
 function Field({
   label,
   value,
@@ -230,15 +235,15 @@ export default function ResumeBuilder({
   kind?: "resume" | "cv";
 }) {
   const [data, setData] = useState<ResumeData | null>(null);
-  const [title, setTitle] = useState("Untitled resume");
+  const [title, setTitle] = useState("未命名简历");
   const [id, setId] = useState("");
   const [active, setActive] = useState("basics");
   const [settings, setSettings] = useState("templates");
   const [mobile, setMobile] = useState("content");
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [saveStatus, setSaveStatus] = useState("Local draft");
+  const [saveStatus, setSaveStatus] = useState("本地草稿");
   const [message, setMessage] = useState("");
-  const [previewStatus, setPreviewStatus] = useState("Preparing preview");
+  const [previewStatus, setPreviewStatus] = useState("正在准备预览");
   const [blob, setBlob] = useState<Blob | null>(null);
   const [zoom, setZoom] = useState(75);
   const previewWidth = (794 * zoom) / 100;
@@ -293,19 +298,17 @@ export default function ResumeBuilder({
         dirty.current = previousLayout !== JSON.stringify(d);
         name = existing.title;
         documentId = existing.id;
-        setSaveStatus(dirty.current ? "Updating layout…" : "All changes saved");
+        setSaveStatus(dirty.current ? "正在更新布局…" : "所有更改已保存");
       } else {
         const blank = params.has("new");
         d = blank ? newResume() : sampleResume();
-        name = blank
-          ? `Untitled ${kind === "cv" ? "CV" : "resume"}`
-          : "Sample resume";
+        name = blank ? (kind === "cv" ? "未命名履历" : "未命名简历") : "示例简历";
         documentId = makeId();
         setSample(!blank);
         const template = params.get("template");
         if (template) {
           d = createTemplateResume(template, blank);
-          name = `${reactiveTemplates.find(t => t.id === d.metadata.template)!.name} resume`;
+          name = `${reactiveTemplates.find(t => t.id === d.metadata.template)!.name} 简历`;
         }
         const example = examples.find((e) => e.slug === params.get("example"));
         if (example) {
@@ -315,7 +318,7 @@ export default function ResumeBuilder({
             d.metadata.template = design.metadata.template;
             d.metadata.design.colors.primary = design.metadata.design.colors.primary;
           }
-          name = `${example.title} resume`;
+          name = `${roleLabels[example.slug] ?? example.title}简历`;
           setSample(params.get("preset") !== "blank");
         }
       }
@@ -324,10 +327,10 @@ export default function ResumeBuilder({
       setTitle(name);
       setReady(true);
       if (params.has("id") && !existing)
-        notify("Document not found. A new draft has been opened.");
+        notify("找不到该文档，已打开一份新草稿。");
     } catch (e) {
       setFatal(
-        "Your saved document could not be opened. Your original browser data has been left untouched. Import a valid backup or return to My documents.",
+        "无法打开已保存的文档。原有数据仍保存在浏览器中，请导入有效的备份或返回「我的文档」。",
       );
       console.error(e);
     }
@@ -336,21 +339,21 @@ export default function ResumeBuilder({
     if (!data || !ready) return;
     latest.current = { data, title, id };
     if (!dirty.current) return;
-    setSaveStatus("Saving…");
+    setSaveStatus("正在保存…");
     const timer = setTimeout(() => {
       try {
         writeResume(data, id, title, kind);
         dirty.current = false;
-        setSaveStatus("All changes saved");
+        setSaveStatus("所有更改已保存");
         history.replaceState(
           null,
           "",
           `${location.pathname}?id=${encodeURIComponent(id)}`,
         );
       } catch {
-        setSaveStatus("Not saved — export a backup");
+        setSaveStatus("保存失败，请导出备份");
         notify(
-          "Browser storage is unavailable or full. Export JSON to keep your work.",
+          "浏览器存储不可用或空间不足，请导出 JSON 备份。",
         );
       }
     }, 500);
@@ -444,17 +447,17 @@ export default function ResumeBuilder({
       try {
         const { createDocx } = await import("../../lib/docx-export");
         downloadBlob(await createDocx(data), filename + ".docx");
-        notify("DOCX download started.");
+        notify("已开始下载 DOCX。");
       } catch {
         notify(
-          "The Word export could not be generated. Try PDF or JSON instead.",
+          "无法生成 Word 文件，请尝试导出 PDF 或 JSON。",
         );
       }
       return;
     }
     if (format === "pdf") {
       if (!blob) {
-        notify("Wait for the latest preview before downloading.");
+        notify("请等待预览更新后再下载。");
         return;
       }
       downloadBlob(blob, filename + ".pdf");
@@ -482,12 +485,12 @@ export default function ResumeBuilder({
         new Blob([exportText(data)], { type: "text/plain;charset=utf-8" }),
         filename + ".txt",
       );
-    notify(`${format.toUpperCase()} download started.`);
+    notify(`已开始下载 ${format.toUpperCase()}。`);
   };
   const importFile = async (file: File) => {
     try {
       if (file.size > 5_000_000)
-        throw Error("Please choose a JSON file smaller than 5 MB.");
+        throw Error("请选择小于 5 MB 的 JSON 文件。");
       const input = JSON.parse(await file.text());
       const imported = input.data?.basics
         ? sanitizeResume(input.data)
@@ -496,7 +499,7 @@ export default function ResumeBuilder({
           : null;
       if (!imported)
         throw Error(
-          "Unsupported file. Choose a Reactive Resume or resumv JSON backup.",
+          "不支持此文件，请选择 Reactive Resume 或 resumv 的 JSON 备份。",
         );
       const newId = makeId();
       const name = String(
@@ -513,16 +516,16 @@ export default function ResumeBuilder({
       setFutureCount(0);
       dirty.current = false;
       history.replaceState(null, "", `${location.pathname}?id=${newId}`);
-      notify("Imported as a new document. Your previous resume is unchanged.");
+      notify("已导入为新文档，原简历仍可在「我的文档」中打开。");
     } catch (e) {
       notify(
-        e instanceof Error ? e.message : "This file could not be imported.",
+        e instanceof SyntaxError ? "JSON 文件格式无效。" : e instanceof Error ? e.message : "无法导入此文件。",
       );
     }
   };
   const photo = async (file: File) => {
     if (!/^image\/(png|jpeg|webp)$/.test(file.type) || file.size > 5_000_000) {
-      notify("Choose a PNG, JPG, or WebP image under 5 MB.");
+      notify("请选择小于 5 MB 的 PNG、JPG 或 WebP 图片。");
       return;
     }
     try {
@@ -539,22 +542,22 @@ export default function ResumeBuilder({
         d.picture.hidden = false;
       }, true);
     } catch {
-      notify("This image could not be read.");
+      notify("无法读取此图片。");
     }
   };
   if (fatal)
     return (
       <div className="builder-error">
-        <h1>Let’s protect your work.</h1>
+        <h1>无法打开文档</h1>
         <p>{fatal}</p>
-        <a href="/documents/">Return to My documents</a>
+        <a href="/documents/">返回我的文档</a>
       </div>
     );
   if (!data)
     return (
       <div className="builder-loading">
         <LoaderCircle className="spin" />
-        <p>Opening your workspace…</p>
+        <p>正在打开编辑器…</p>
       </div>
     );
   const section =
@@ -565,10 +568,7 @@ export default function ResumeBuilder({
         : data.customSections.find((s) => s.id === active);
   const custom =
     active !== "basics" && active !== "summary" && !(active in data.sections);
-  const sectionTitle =
-    active === "basics"
-      ? "Personal details"
-      : section?.title || sectionNames[active] || "Custom section";
+  const sectionTitle = sectionLabel(active, section);
   const changeSection = (d: ResumeData) =>
     active === "summary"
       ? d.summary
@@ -637,7 +637,7 @@ export default function ResumeBuilder({
           <a
             className="back-docs"
             href="/documents/"
-            aria-label="Back to documents"
+            aria-label="返回我的文档"
           >
             <ArrowLeft size={19} />
           </a>
@@ -647,7 +647,7 @@ export default function ResumeBuilder({
           <span className="top-separator" />
           <input
             className="document-title-input"
-            aria-label="Document name"
+            aria-label="文档名称"
             value={title}
             onChange={(e) => {
               dirty.current = true;
@@ -662,16 +662,16 @@ export default function ResumeBuilder({
         <div className="builder-top-actions">
           <GitHubLink />
           <button
-            title="Undo"
-            aria-label="Undo"
+            title="撤销"
+            aria-label="撤销"
             disabled={!historyCount}
             onClick={undo}
           >
             <Undo2 size={17} />
           </button>
           <button
-            title="Redo"
-            aria-label="Redo"
+            title="重做"
+            aria-label="重做"
             disabled={!futureCount}
             onClick={redo}
           >
@@ -683,28 +683,28 @@ export default function ResumeBuilder({
             href="/builder/?new=1"
           >
             <Plus size={16} />
-            New
+            新建
           </a>
           <div className="builder-download-group">
           <button
             className="builder-download"
-            aria-label="Download PDF"
+            aria-label="下载 PDF"
             disabled={!blob}
             onClick={() => saveFile("pdf")}
           >
             <Download size={16} />
-            <span>Download PDF</span>
+            <span>下载 PDF</span>
           </button>
-          <button className="builder-download builder-download-toggle" popoverTarget="download-formats" aria-label="Download formats" title="More download formats">
+          <button className="builder-download builder-download-toggle" popoverTarget="download-formats" aria-label="下载格式" title="更多下载格式">
             <ChevronDown size={16} />
           </button>
           <div id="download-formats" className="builder-download-menu" popover="auto">
-            <p>Download as</p>
+            <p>选择下载格式</p>
             {([
-              ["pdf", "PDF", ".pdf", "Matches your preview"],
-              ["docx", "Word", ".docx", "Editable document"],
-              ["md", "Markdown", ".md", "Formatted text"],
-              ["json", "JSON", ".json", "Content and design backup"],
+              ["pdf", "PDF", ".pdf", "与预览版式一致"],
+              ["docx", "Word", ".docx", "可编辑文档"],
+              ["md", "Markdown", ".md", "带格式的纯文本"],
+              ["json", "JSON", ".json", "备份内容与设计"],
             ] as const).map(([format, label, extension, description]) => (
               <button key={format} disabled={format === "pdf" && !blob} onClick={(event) => {
                 event.currentTarget.closest<HTMLElement>("[popover]")?.hidePopover();
@@ -712,7 +712,7 @@ export default function ResumeBuilder({
               }}>
                 <FileText size={18} />
                 <span><strong>{label} <small>{extension}</small></strong><small>{description}</small></span>
-                {format === "pdf" && <span className="download-default">Default</span>}
+                {format === "pdf" && <span className="download-default">默认</span>}
               </button>
             ))}
           </div>
@@ -722,12 +722,12 @@ export default function ResumeBuilder({
       <div
         className="builder-mobile-tabs"
         role="tablist"
-        aria-label="Workspace panels"
+        aria-label="编辑器面板"
       >
         {[
-          ["content", "Content"],
-          ["preview", "Preview"],
-          ["design", "Design"],
+          ["content", "内容"],
+          ["preview", "预览"],
+          ["design", "设计"],
         ].map(([value, label]) => (
           <button
             role="tab"
@@ -748,16 +748,16 @@ export default function ResumeBuilder({
         <aside
           id="resume-content-panel"
           className="builder-left"
-          aria-label="Resume content"
+          aria-label="简历内容"
         >
           <div className="panel-heading">
             <div>
-              <span className="panel-eyebrow">MAKE IT PERSONAL</span>
-              <h2>Content</h2>
+              <span className="panel-eyebrow">编辑简历</span>
+              <h2>内容</h2>
             </div>
             <button
               className="desktop-only"
-              aria-label="Hide content panel"
+              aria-label="收起内容面板"
               onClick={() => setLeftOpen(false)}
             >
               <PanelLeftClose size={18} />
@@ -774,7 +774,7 @@ export default function ResumeBuilder({
                 }}
               >
                 <Columns2 size={16} />
-                Reorder sections
+                调整章节顺序
               </button>
               {sectionLinks.map((key) => {
                 const s =
@@ -796,9 +796,7 @@ export default function ResumeBuilder({
                   >
                     <I size={17} />
                     <span>
-                      {key === "basics"
-                        ? "Personal details"
-                        : s?.title || sectionNames[key] || "Custom section"}
+                      {sectionLabel(key, s)}
                     </span>
                     {s?.hidden ? (
                       <EyeOff size={13} />
@@ -821,7 +819,7 @@ export default function ResumeBuilder({
                     d.customSections.push({
                       id: sectionId,
                       type: "summary",
-                      title: "Custom section",
+                      title: "自定义章节",
                       icon: "",
                       columns: 1,
                       hidden: false,
@@ -836,7 +834,7 @@ export default function ResumeBuilder({
                 }}
               >
                 <Plus size={16} />
-                Add a custom section
+                添加自定义章节
               </button>
             </div>
             <div className="section-editor" key={active}>
@@ -844,9 +842,9 @@ export default function ResumeBuilder({
                 <h3>{sectionTitle}</h3>
                 {active !== "basics" && (
                   <button
-                    title={section?.hidden ? "Show section" : "Hide section"}
+                    title={section?.hidden ? "显示章节" : "隐藏章节"}
                     aria-label={
-                      section?.hidden ? "Show section" : "Hide section"
+                      section?.hidden ? "显示章节" : "隐藏章节"
                     }
                     onClick={() =>
                       update((d) => {
@@ -863,20 +861,20 @@ export default function ResumeBuilder({
                   <div className="photo-control">
                     <button
                       className="photo-upload"
-                      aria-label="Upload profile photo"
+                      aria-label="上传头像"
                       onClick={() => photoFile.current?.click()}
                     >
                       {data.picture.url ? (
-                        <img src={data.picture.url} alt="Profile" />
+                        <img src={data.picture.url} alt="头像" />
                       ) : (
                         <ImagePlus size={24} />
                       )}
                     </button>
                     <div>
-                      <strong>Profile picture</strong>
-                      <p>Optional · JPG, PNG or WebP</p>
+                      <strong>头像</strong>
+                      <p>选填 · JPG、PNG 或 WebP</p>
                       <button onClick={() => photoFile.current?.click()}>
-                        Upload photo
+                        上传照片
                       </button>
                       {data.picture.url && (
                         <button
@@ -886,7 +884,7 @@ export default function ResumeBuilder({
                             }, true)
                           }
                         >
-                          Remove
+                          移除
                         </button>
                       )}
                     </div>
@@ -902,11 +900,11 @@ export default function ResumeBuilder({
                     }}
                   />
                   {[
-                    ["name", "Full name", "Alex Morgan"],
-                    ["headline", "Headline", "Senior Product Designer"],
-                    ["email", "Email", "alex@example.com"],
-                    ["phone", "Phone", "+1 (415) 555-0128"],
-                    ["location", "Location", "San Francisco, CA"],
+                    ["name", "姓名", "张晓"],
+                    ["headline", "职业头衔", "资深产品设计师"],
+                    ["email", "电子邮箱", "alex@example.com"],
+                    ["phone", "电话", "+1 (415) 555-0128"],
+                    ["location", "所在地", "广东省深圳市"],
                   ].map(([key, label, placeholder]) => (
                     <Field
                       key={key}
@@ -924,7 +922,7 @@ export default function ResumeBuilder({
                     />
                   ))}
                   <Field
-                    label="Website"
+                    label="个人网站"
                     value={data.basics.website.url}
                     placeholder="https://yourportfolio.com"
                     onChange={(v) =>
@@ -934,7 +932,7 @@ export default function ResumeBuilder({
                     }
                   />
                   <Field
-                    label="Website label"
+                    label="网站显示文字"
                     value={data.basics.website.label}
                     placeholder="yourportfolio.com"
                     onChange={(v) =>
@@ -944,15 +942,15 @@ export default function ResumeBuilder({
                     }
                   />
                   <div className="contact-links">
-                    <h4>Additional contact links</h4>
+                    <h4>其他联系方式</h4>
                     {data.basics.customFields.map((field, index) => {
                       const label = field.icon === "github-logo" || /^https?:\/\/github\.com(?:\/|$)/i.test(field.link.trim())
                         ? "GitHub"
-                        : `Contact link ${index + 1}`;
+                        : `联系方式 ${index + 1}`;
                       return (
                         <div key={field.id} className="contact-link-fields">
                           <Field
-                            label={`${label} URL`}
+                            label={`${label} 网址`}
                             type="url"
                             value={field.link}
                             placeholder={label === "GitHub" ? "https://github.com/username" : "https://example.com"}
@@ -966,7 +964,7 @@ export default function ResumeBuilder({
                             })}
                           />
                           <Field
-                            label={`${label} display text (optional)`}
+                            label={`${label} 显示文字（选填）`}
                             value={field.text}
                             onChange={(value) => update((draft) => {
                               draft.basics.customFields[index].text = value;
@@ -975,12 +973,12 @@ export default function ResumeBuilder({
                           <button
                             type="button"
                             className="remove-contact-link"
-                            aria-label={`Remove ${label}`}
+                            aria-label={`删除${label}`}
                             onClick={() => update((draft) => {
                               draft.basics.customFields.splice(index, 1);
                             }, true)}
                           >
-                            <Trash2 size={14} /> Remove link
+                            <Trash2 size={14} /> 删除链接
                           </button>
                         </div>
                       );
@@ -991,13 +989,13 @@ export default function ResumeBuilder({
                         draft.basics.customFields.push({ id, icon: "link", text: "", link: "" });
                       }, true);
                     }}>
-                      <Plus size={15} /> Add a contact link
+                      <Plus size={15} /> 添加联系方式
                     </button>
                   </div>
                   {data.picture.url && (
                     <>
                       <Range
-                        label="Photo size"
+                        label="照片尺寸"
                         value={data.picture.size}
                         min={32}
                         max={160}
@@ -1009,7 +1007,7 @@ export default function ResumeBuilder({
                         }
                       />
                       <Range
-                        label="Photo corners"
+                        label="照片圆角"
                         value={data.picture.borderRadius}
                         min={0}
                         max={100}
@@ -1025,8 +1023,9 @@ export default function ResumeBuilder({
               ) : (
                 <>
                   <Field
-                    label="Section heading"
-                    value={section?.title || sectionNames[active] || ""}
+                    label="章节标题"
+                    value={section?.title || ""}
+                    placeholder={sectionLabels[active]}
                     onChange={(value) =>
                       update((d) => {
                         changeSection(d).title = value;
@@ -1036,11 +1035,10 @@ export default function ResumeBuilder({
                   {active === "summary" ? (
                     <>
                       <p className="b-hint">
-                        A short introduction to your experience and what you do
-                        best.
+                        简要介绍你的相关经历和擅长的领域。
                       </p>
                       <RichText
-                        label="Professional summary"
+                        label="个人简介"
                         value={data.summary.content}
                         onChange={(value) =>
                           update((d) => {
@@ -1067,7 +1065,7 @@ export default function ResumeBuilder({
                               {items.length > 1 && (
                                 <span
                                   className="reorder-handle"
-                                  title="Drag to reorder entry"
+                                  title="拖动调整条目顺序"
                                   aria-hidden="true"
                                   {...entryDrag.handle(item.id)}
                                 >
@@ -1092,7 +1090,7 @@ export default function ResumeBuilder({
                                       item.language ||
                                       item.network ||
                                       item.organization ||
-                                      `Entry ${i + 1}`}
+                                      `条目 ${i + 1}`}
                                   </strong>
                                   <small>
                                     {item.position ||
@@ -1112,16 +1110,16 @@ export default function ResumeBuilder({
                               {items.length > 1 && (
                                 <div className="reorder-arrows">
                                   <button
-                                    title="Move entry up"
-                                    aria-label={`Move entry ${i + 1} up`}
+                                    title="上移条目"
+                                    aria-label={`上移条目 ${i + 1}`}
                                     disabled={i === 0}
                                     onClick={() => moveEntry(item.id, i - 1)}
                                   >
                                     <ArrowUp size={14} />
                                   </button>
                                   <button
-                                    title="Move entry down"
-                                    aria-label={`Move entry ${i + 1} down`}
+                                    title="下移条目"
+                                    aria-label={`下移条目 ${i + 1}`}
                                     disabled={i === items.length - 1}
                                     onClick={() => moveEntry(item.id, i + 2)}
                                   >
@@ -1147,7 +1145,7 @@ export default function ResumeBuilder({
                                           i,
                                           key,
                                           key === "keywords"
-                                            ? v.split(",").map((s) => s.trim())
+                                            ? v.split(/[,，]/).map((s) => s.trim())
                                             : v,
                                         )
                                       }
@@ -1156,16 +1154,16 @@ export default function ResumeBuilder({
                                 )}
                                 {itemType === "summary" ? (
                                   <RichText
-                                    label="Section content"
+                                    label="章节内容"
                                     value={item.content || ""}
                                     onChange={(v) => editItem(i, "content", v)}
                                   />
                                 ) : null}
                                 {hasDescription.has(itemType) && (
                                   <>
-                                    <span className="b-label">Description</span>
+                                    <span className="b-label">描述</span>
                                     <RichText
-                                      label={`${sectionTitle} description`}
+                                      label={`${sectionTitle}描述`}
                                       value={item.description || ""}
                                       onChange={(v) =>
                                         editItem(i, "description", v)
@@ -1175,7 +1173,7 @@ export default function ResumeBuilder({
                                 )}
                                 {item.website && (
                                   <Field
-                                    label="Link"
+                                    label="链接"
                                     value={item.website.url}
                                     placeholder="https://"
                                     onChange={(v) =>
@@ -1188,7 +1186,7 @@ export default function ResumeBuilder({
                                 )}
                                 {["skills", "languages"].includes(itemType) && (
                                   <Range
-                                    label="Proficiency level (0 hides indicator)"
+                                    label="熟练度等级（0 为隐藏）"
                                     min={0}
                                     max={5}
                                     value={item.level || 0}
@@ -1197,8 +1195,8 @@ export default function ResumeBuilder({
                                 )}
                                 <div className="entry-actions">
                                   <button
-                                    title="Duplicate entry"
-                                    aria-label="Duplicate entry"
+                                    title="复制条目"
+                                    aria-label="复制条目"
                                     onClick={() =>
                                       update((d) => {
                                         (changeSection(d) as any).items.splice(
@@ -1216,10 +1214,10 @@ export default function ResumeBuilder({
                                   </button>
                                   <button
                                     title={
-                                      item.hidden ? "Show entry" : "Hide entry"
+                                      item.hidden ? "显示条目" : "隐藏条目"
                                     }
                                     aria-label={
-                                      item.hidden ? "Show entry" : "Hide entry"
+                                      item.hidden ? "显示条目" : "隐藏条目"
                                     }
                                     onClick={() =>
                                       editItem(i, "hidden", !item.hidden)
@@ -1233,8 +1231,8 @@ export default function ResumeBuilder({
                                   </button>
                                   <button
                                     className="delete-entry"
-                                    title="Remove entry"
-                                    aria-label="Remove entry"
+                                    title="删除条目"
+                                    aria-label="删除条目"
                                     onClick={() => {
                                       update((d) => {
                                         (changeSection(d) as any).items.splice(
@@ -1243,7 +1241,7 @@ export default function ResumeBuilder({
                                         );
                                       }, true);
                                       notify(
-                                        "Entry removed. Use Undo to restore it.",
+                                        "已删除条目，可以撤销恢复。",
                                       );
                                     }}
                                   >
@@ -1266,10 +1264,7 @@ export default function ResumeBuilder({
                         }}
                       >
                         <Plus size={15} />
-                        Add{" "}
-                        {itemType === "summary"
-                          ? "text block"
-                          : sectionTitle.toLowerCase().replace(/s$/, "")}
+                        {itemType === "summary" ? "添加文本块" : "添加条目"}
                       </button>
                     </>
                   )}
@@ -1287,11 +1282,11 @@ export default function ResumeBuilder({
                           }
                         }, true);
                         setActive("basics");
-                        notify("Section removed. Use Undo to restore it.");
+                        notify("已删除章节，可以撤销恢复。");
                       }}
                     >
                       <Trash2 size={14} />
-                      Remove section
+                      删除章节
                     </button>
                   )}
                 </>
@@ -1299,19 +1294,19 @@ export default function ResumeBuilder({
             </div>
           </div>
           <div className="panel-footer">
-            <span className="privacy-dot" /> Your data stays in this browser.
+            <span className="privacy-dot" /> 简历数据保存在当前浏览器。
           </div>
         </aside>
         <section
           className="builder-canvas"
           ref={canvas}
-          aria-label="Resume preview workspace"
+          aria-label="简历预览区"
         >
           <div className="canvas-top">
             {!leftOpen && (
               <div className="canvas-panel-toggles">
                 <button
-                  aria-label="Show content panel"
+                  aria-label="展开内容面板"
                   aria-controls="resume-content-panel"
                   aria-expanded={leftOpen}
                   onClick={() => {
@@ -1320,7 +1315,7 @@ export default function ResumeBuilder({
                   }}
                 >
                   <BookOpen size={17} />
-                  <span>Show content</span>
+                  <span>显示内容</span>
                 </button>
               </div>
             )}
@@ -1338,14 +1333,14 @@ export default function ResumeBuilder({
             <div className="canvas-panel-toggles">
               {!rightOpen && (
                 <button
-                  aria-label="Show design panel"
+                  aria-label="展开设计面板"
                   onClick={() => {
                     setRightOpen(true);
                     setMobile("design");
                   }}
                 >
                   <Settings2 size={17} />
-                  <span>Show design</span>
+                  <span>显示设计</span>
                 </button>
               )}
             </div>
@@ -1353,9 +1348,9 @@ export default function ResumeBuilder({
           {sample && (
             <div className="sample-banner">
               <Sparkles size={14} />
-              <span>Sample content — replace it with your own story.</span>
+              <span>当前为英文示例，请替换为你的实际经历。</span>
               <a href="/builder/?new=1">
-                Start blank
+                从空白简历开始
               </a>
             </div>
           )}
@@ -1367,7 +1362,7 @@ export default function ResumeBuilder({
               <ResumeCanvas data={data} width={previewWidth} onBlob={onBlob} onStatus={onStatus} />
             </div>
             <div className="canvas-end">
-              Crafted by you. Ready for what’s next.
+              已显示全部页面
             </div>
           </div>
           <div className="canvas-dock">
@@ -1377,37 +1372,37 @@ export default function ResumeBuilder({
             </span>
             <span className="dock-divider" />
             <button
-              aria-label="Zoom out"
+              aria-label="缩小"
               onClick={() => setZoom((z) => Math.max(25, z - 10))}
             >
               <Minus size={16} />
             </button>
             <span className="zoom-label">{zoom}%</span>
             <button
-              aria-label="Zoom in"
+              aria-label="放大"
               onClick={() => setZoom((z) => Math.min(150, z + 10))}
             >
               <Plus size={16} />
             </button>
             <span className="dock-divider" />
             <button
-              aria-label="Fit to width"
-              title="Fit to width"
+              aria-label="适应宽度"
+              title="适应宽度"
               onClick={fit}
             >
               <Maximize size={16} />
             </button>
           </div>
         </section>
-        <aside className="builder-right" aria-label="Resume design">
+        <aside className="builder-right" aria-label="简历设计">
           <div className="panel-heading">
             <div>
-              <span className="panel-eyebrow">MAKE IT YOURS</span>
-              <h2>Design</h2>
+              <span className="panel-eyebrow">设置版式</span>
+              <h2>设计</h2>
             </div>
             <button
               className="desktop-only"
-              aria-label="Hide design panel"
+              aria-label="收起设计面板"
               onClick={() => setRightOpen(false)}
             >
               <PanelRightClose size={18} />
@@ -1416,15 +1411,15 @@ export default function ResumeBuilder({
           <div
             className="design-tabs"
             role="tablist"
-            aria-label="Design settings"
+            aria-label="设计设置"
           >
             {[
-              ["templates", LayoutTemplate, "Templates"],
-              ["typography", Type, "Typography"],
-              ["layout", Columns2, "Layout"],
-              ["design", Palette, "Colors"],
-              ["page", Settings2, "Page"],
-              ["export", Download, "Export"],
+              ["templates", LayoutTemplate, "模板"],
+              ["typography", Type, "字体排版"],
+              ["layout", Columns2, "布局"],
+              ["design", Palette, "配色"],
+              ["page", Settings2, "页面"],
+              ["export", Download, "导出"],
             ].map(([key, Icon, label]) => {
               const I = Icon as typeof Type;
               return (
@@ -1446,23 +1441,23 @@ export default function ResumeBuilder({
             {settings === "templates" && (
               <>
                 <div className="settings-title">
-                  <h3>Templates</h3>
-                  <span>15 layouts</span>
+                  <h3>模板</h3>
+                  <span>15 种版式</span>
                 </div>
-                <p className="b-hint">Loads the sample content and photo shown. Undo restores your previous resume.</p>
+                <p className="b-hint">选用模板会载入图中的示例内容和照片，点击撤销可恢复原简历。</p>
                 <div className="builder-template-grid">
                   {reactiveTemplates.map((t) => (
                     <button
                       key={t.id}
                       className={`builder-template ${data.metadata.template === t.id ? "selected" : ""}`}
-                      aria-label={`Use ${t.name} template`}
+                      aria-label={`使用 ${t.name} 模板`}
                       aria-pressed={data.metadata.template === t.id}
                       onClick={() => setTemplate(t.id)}
                     >
                       <span className="template-thumb">
                         <img
                           src={`/templates/${t.id}.jpg`}
-                          alt={`${t.name} template preview`}
+                          alt={`${t.name} 模板预览`}
                           loading="lazy"
                         />
                         {data.metadata.template === t.id && (
@@ -1479,15 +1474,15 @@ export default function ResumeBuilder({
             )}
             {settings === "typography" && (
               <>
-                <h3>Typography</h3>
-                <p className="b-hint">Find the right voice for your resume.</p>
+                <h3>字体排版</h3>
+                <p className="b-hint">设置正文和标题的字体、字号与行高。</p>
                 {(["body", "heading"] as const).map((part) => (
                   <div className="settings-group" key={part}>
-                    <h4>{part === "body" ? "Body text" : "Headings"}</h4>
+                    <h4>{part === "body" ? "正文" : "标题"}</h4>
                     <label className="b-field">
-                      <span>Font family</span>
+                      <span>字体</span>
                       <select
-                        aria-label={`${part} font family`}
+                        aria-label={part === "body" ? "正文字体" : "标题字体"}
                         value={data.metadata.typography[part].fontFamily}
                         onChange={(e) =>
                           update((d) => {
@@ -1504,7 +1499,7 @@ export default function ResumeBuilder({
                       </select>
                     </label>
                     <Range
-                      label={`${part === "body" ? "Body" : "Heading"} font size`}
+                      label={part === "body" ? "正文字号" : "标题字号"}
                       min={7}
                       max={part === "body" ? 16 : 24}
                       value={data.metadata.typography[part].fontSize}
@@ -1516,7 +1511,7 @@ export default function ResumeBuilder({
                       }
                     />
                     <Range
-                      label={`${part === "body" ? "Body" : "Heading"} line height`}
+                      label={part === "body" ? "正文行高" : "标题行高"}
                       min={1}
                       max={2}
                       step={0.1}
@@ -1533,8 +1528,8 @@ export default function ResumeBuilder({
             )}
             {settings === "design" && (
               <>
-                <h3>Colors</h3>
-                <p className="b-hint">Small accents. A strong impression.</p>
+                <h3>配色</h3>
+                <p className="b-hint">选择强调色，或自定义文字和纸张颜色。</p>
                 <div className="color-palette">
                   {[
                     "#111827",
@@ -1548,7 +1543,7 @@ export default function ResumeBuilder({
                   ].map((c) => (
                     <button
                       key={c}
-                      aria-label={`Set accent ${c}`}
+                      aria-label={`设置强调色 ${c}`}
                       aria-pressed={data.metadata.design.colors.primary === c}
                       style={{ background: c }}
                       onClick={() =>
@@ -1564,14 +1559,14 @@ export default function ResumeBuilder({
                   ))}
                 </div>
                 {[
-                  ["primary", "Accent"],
-                  ["text", "Text"],
-                  ["background", "Paper"],
+                  ["primary", "强调色"],
+                  ["text", "文字"],
+                  ["background", "纸张"],
                 ].map(([key, label]) => (
                   <label className="b-color-field" key={key}>
                     <span>{label}</span>
                     <input
-                      aria-label={`${label} color`}
+                      aria-label={`${label}颜色`}
                       type="color"
                       value={
                         /^#[\da-f]{6}$/i.test(
@@ -1591,9 +1586,9 @@ export default function ResumeBuilder({
                     />
                   </label>
                 ))}
-                <h4>Skill indicators</h4>
+                <h4>技能等级标记</h4>
                 <label className="b-field">
-                  <span>Indicator style</span>
+                  <span>标记样式</span>
                   <select
                     value={data.metadata.design.level.type}
                     onChange={(e) =>
@@ -1603,14 +1598,14 @@ export default function ResumeBuilder({
                     }
                   >
                     {[
-                      "hidden",
-                      "circle",
-                      "square",
-                      "rectangle",
-                      "progress-bar",
-                    ].map((s) => (
-                      <option value={s} key={s}>
-                        {s.replaceAll("-", " ")}
+                      ["hidden", "隐藏"],
+                      ["circle", "圆形"],
+                      ["square", "正方形"],
+                      ["rectangle", "矩形"],
+                      ["progress-bar", "进度条"],
+                    ].map(([value, label]) => (
+                      <option value={value} key={value}>
+                        {label}
                       </option>
                     ))}
                   </select>
@@ -1619,12 +1614,12 @@ export default function ResumeBuilder({
             )}
             {settings === "page" && (
               <>
-                <h3>Page</h3>
+                <h3>页面</h3>
                 <p className="b-hint">
-                  The preview is your actual PDF, including page breaks.
+                  预览与导出的 PDF 一致，包括分页位置。
                 </p>
                 <label className="b-field">
-                  <span>Paper size</span>
+                  <span>纸张尺寸</span>
                   <select
                     value={data.metadata.page.format}
                     onChange={(e) =>
@@ -1636,11 +1631,11 @@ export default function ResumeBuilder({
                     }
                   >
                     <option value="a4">A4 · 210 × 297 mm</option>
-                    <option value="letter">US Letter · 8.5 × 11 in</option>
+                    <option value="letter">美国信纸（Letter）· 8.5 × 11 英寸</option>
                   </select>
                 </label>
                 <Range
-                  label="Horizontal margin"
+                  label="左右页边距"
                   value={data.metadata.page.marginX}
                   min={12}
                   max={60}
@@ -1652,7 +1647,7 @@ export default function ResumeBuilder({
                   }
                 />
                 <Range
-                  label="Vertical margin"
+                  label="上下页边距"
                   value={data.metadata.page.marginY}
                   min={12}
                   max={60}
@@ -1664,7 +1659,7 @@ export default function ResumeBuilder({
                   }
                 />
                 <Range
-                  label="Item spacing"
+                  label="条目间距"
                   value={data.metadata.page.gapY}
                   min={0}
                   max={18}
@@ -1685,7 +1680,7 @@ export default function ResumeBuilder({
                       }, true)
                     }
                   />
-                  Show section icons
+                  显示章节图标
                 </label>
                 <label className="b-checkbox">
                   <input
@@ -1697,22 +1692,22 @@ export default function ResumeBuilder({
                       }, true)
                     }
                   />
-                  Show contact icons
+                  显示联系方式图标
                 </label>
               </>
             )}
             {settings === "layout" && (
               <>
-                <h3>Layout</h3>
+                <h3>布局</h3>
                 <button className="b-button" onClick={() => update(d => flowResumeSections(d), true)}>
-                  Flow content continuously
+                  连续排版
                 </button>
-                <p className="b-hint">Let all sections, including cover letters, fill the available space. A new sheet starts only when the content reaches the bottom.</p>
+                <p className="b-hint">取消手动分页，让所有章节（含求职信）连续排版，页面排满后自动换页。</p>
                 <p className="b-hint">
-                  Drag the handles to reorder sections or move them between columns. You can also use the arrow buttons.
+                  拖动手柄可调整章节顺序或移动到另一栏，也可以点击上下箭头排序。
                 </p>
                 <Range
-                  label="Sidebar width"
+                  label="侧栏宽度"
                   min={20}
                   max={45}
                   suffix="%"
@@ -1725,7 +1720,7 @@ export default function ResumeBuilder({
                 />
                 {data.metadata.layout.pages.map((page, pi) => (
                   <div className="layout-page" key={pi}>
-                    <h4>Page layout {pi + 1}</h4>
+                    <h4>第 {pi + 1} 组页面布局</h4>
                     <label className="b-checkbox">
                       <input
                         type="checkbox"
@@ -1741,7 +1736,7 @@ export default function ResumeBuilder({
                           }, true)
                         }
                       />
-                      Single column
+                      单栏排版
                     </label>
                     {(["main", "sidebar"] as const)
                       .filter((col) => !page.fullWidth || col === "main")
@@ -1753,7 +1748,7 @@ export default function ResumeBuilder({
                             moveSection(sourceId, pi, col, page[col].length),
                           )}
                         >
-                          <h5>{col === "main" ? "Main column" : "Sidebar"}</h5>
+                          <h5>{col === "main" ? "主栏" : "侧栏"}</h5>
                           {page[col].map((sid, index) => {
                             const s =
                               sid === "summary"
@@ -1763,7 +1758,7 @@ export default function ResumeBuilder({
                                   : data.customSections.find(
                                       (x) => x.id === sid,
                                     );
-                            const label = s?.title || sectionNames[sid] || "Custom section";
+                            const label = sectionLabel(sid, s);
                             const otherColumn = col === "main" ? "sidebar" : "main";
                             return (
                               <div
@@ -1776,7 +1771,7 @@ export default function ResumeBuilder({
                               >
                                 <span
                                   className="reorder-handle"
-                                  title="Drag to reorder section"
+                                  title="拖动调整章节顺序"
                                   aria-hidden="true"
                                   {...sectionDrag.handle(sid)}
                                 >
@@ -1785,16 +1780,16 @@ export default function ResumeBuilder({
                                 <span className="layout-row-title">{label}</span>
                                 <div className="reorder-arrows">
                                   <button
-                                    title="Move section up"
-                                    aria-label={`Move ${label} up`}
+                                    title="上移章节"
+                                    aria-label={`上移${label}`}
                                     disabled={index === 0}
                                     onClick={() => moveSection(sid, pi, col, index - 1)}
                                   >
                                     <ArrowUp size={14} />
                                   </button>
                                   <button
-                                    title="Move section down"
-                                    aria-label={`Move ${label} down`}
+                                    title="下移章节"
+                                    aria-label={`下移${label}`}
                                     disabled={index === page[col].length - 1}
                                     onClick={() => moveSection(sid, pi, col, index + 2)}
                                   >
@@ -1803,8 +1798,8 @@ export default function ResumeBuilder({
                                 </div>
                                 {!page.fullWidth && (
                                   <button
-                                    title="Move to the other column"
-                                    aria-label={`Move ${label} to ${otherColumn === "sidebar" ? "sidebar" : "main column"}`}
+                                    title="移至另一栏"
+                                    aria-label={`将${label}移到${otherColumn === "sidebar" ? "侧栏" : "主栏"}`}
                                     onClick={() => moveSection(sid, pi, otherColumn, page[otherColumn].length)}
                                   >
                                     <Columns2 size={14} />
@@ -1821,8 +1816,8 @@ export default function ResumeBuilder({
             )}
             {settings === "export" && (
               <>
-                <h3>Export & import</h3>
-                <p className="b-hint">Your document. Wherever you need it.</p>
+                <h3>导出与导入</h3>
+                <p className="b-hint">下载简历或导入备份。</p>
                 <button
                   className="export-option"
                   disabled={!blob}
@@ -1830,8 +1825,8 @@ export default function ResumeBuilder({
                 >
                   <FileText size={21} />
                   <span>
-                    <strong>Download PDF</strong>
-                    <small>The exact layout shown in your preview.</small>
+                    <strong>下载 PDF</strong>
+                    <small>保留预览中的版式。</small>
                   </span>
                   <Download size={16} />
                 </button>
@@ -1841,9 +1836,9 @@ export default function ResumeBuilder({
                 >
                   <FileText size={21} />
                   <span>
-                    <strong>Download Word (.docx)</strong>
+                    <strong>下载 Word（.docx）</strong>
                     <small>
-                      An editable document with your main and sidebar sections.
+                      保留主栏和侧栏，可在 Word 中编辑。
                     </small>
                   </span>
                   <Download size={16} />
@@ -1854,8 +1849,8 @@ export default function ResumeBuilder({
                 >
                   <FileText size={21} />
                   <span>
-                    <strong>Export JSON backup</strong>
-                    <small>All content, layout, and design settings.</small>
+                    <strong>导出 JSON 备份</strong>
+                    <small>包含全部内容、布局与设计设置。</small>
                   </span>
                   <Download size={16} />
                 </button>
@@ -1865,8 +1860,8 @@ export default function ResumeBuilder({
                 >
                   <FileText size={21} />
                   <span>
-                    <strong>Download Markdown (.md)</strong>
-                    <small>Headings, lists, and links in a portable text file.</small>
+                    <strong>下载 Markdown（.md）</strong>
+                    <small>保留标题、列表和链接的文本文件。</small>
                   </span>
                   <Download size={16} />
                 </button>
@@ -1876,21 +1871,20 @@ export default function ResumeBuilder({
                 >
                   <Upload size={21} />
                   <span>
-                    <strong>Import JSON</strong>
-                    <small>Reactive Resume or resumv backup.</small>
+                    <strong>导入 JSON</strong>
+                    <small>支持 Reactive Resume 和 resumv 的备份文件。</small>
                   </span>
                   <Plus size={16} />
                 </button>
                 <p className="b-hint">
-                  Imports create a new document. PDF and Word imports are not
-                  supported.
+                  导入 JSON 会创建新文档。此处支持 JSON 备份。
                 </p>
               </>
             )}
           </div>
           <div className="template-attribution">
-            <a href="/licenses/">Templates by Reactive Resume ↗</a>
-            <span>Open source · MIT</span>
+            <a href="/licenses/">模板来自 Reactive Resume ↗</a>
+            <span>开源 · MIT 许可</span>
           </div>
         </aside>
       </div>
@@ -1909,7 +1903,7 @@ export default function ResumeBuilder({
         <div className="builder-toast" role="status">
           {message}
           <button
-            aria-label="Dismiss notification"
+            aria-label="关闭通知"
             onClick={() => setMessage("")}
           >
             <X size={15} />

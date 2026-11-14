@@ -1,10 +1,10 @@
 import roleProfiles from "./roles.json";
 import seoAdvice from "./seo/advice.json";
 export const templates = [
- {id:'modern',name:'The Modern',category:'modern',description:'A fresh perspective. A clear, confident layout.'},
- {id:'classic',name:'The Professional',category:'professional',description:'Timeless typography. Experience takes center stage.'},
- {id:'creative',name:'The Creative',category:'creative',description:'An expressive accent for an original thinker.'},
- {id:'minimal',name:'The Essential',category:'simple',description:'Everything you need. Nothing in your way.'},
+ {id:'modern',name:'现代',category:'modern',description:'清晰利落的现代版式。'},
+ {id:'classic',name:'专业',category:'professional',description:'经典排版，突出工作经历。'},
+ {id:'creative',name:'创意',category:'creative',description:'用鲜明的配色表达个人风格。'},
+ {id:'minimal',name:'简约',category:'simple',description:'保留核心信息，简洁易读。'},
 ];
 export const examples = roleProfiles;
 const originalArticles = [

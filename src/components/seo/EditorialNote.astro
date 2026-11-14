@@ -2,6 +2,6 @@
 const {updated='2026-09-21', example=false} = Astro.props;
 ---
 <div class="editorial-note">
-  <p><strong>Published by Resumv</strong> · Updated <time datetime={updated}>{new Date(updated+'T12:00:00Z').toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric',timeZone:'UTC'})}</time></p>
-  <p>{example?'This is a fictional, AI-assisted teaching example, not a real candidate or a verified hiring outcome. Replace all names, dates, credentials, and numbers before applying.':'This guide was drafted with AI assistance. It provides general writing guidance and has not been independently reviewed by a career counselor.'} <a href="/editorial-policy/">How we create content</a> · <a href="https://github.com/liusha-com/resumv/issues">Report an issue</a></p>
+  <p><strong>Resumv 发布</strong>· 更新于 <time datetime={updated}>{new Date(updated+'T12:00:00Z').toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',timeZone:'UTC'})}</time></p>
+  <p>{example?'此示例为借助 AI 编写的虚构教学材料。投递前，请替换姓名、日期、资质和数据。':'本指南借助 AI 起草，提供通用写作建议，未经职业顾问独立审阅。'} <a href="/editorial-policy/">了解编辑政策</a> · <a href="https://github.com/liusha-com/resumv/issues">反馈问题</a></p>
 </div>

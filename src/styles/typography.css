@@ -1,7 +1,7 @@
 /* Same typeface as iodown.com; bundled locally under the SIL Open Font License. */
 :root {
-  font-family: "TikTok Sans Variable", Arial, sans-serif;
-  --font-sans: "TikTok Sans Variable", Arial, sans-serif;
+  font-family: "TikTok Sans Variable", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif;
+  --font-sans: "TikTok Sans Variable", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif;
   font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
