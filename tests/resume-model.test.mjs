@@ -22,6 +22,8 @@ const {
   saveEnvelope,
   exportText,
   getResumeContactLinks,
+  getSectionName,
+  getSummarySectionName,
   cleanHtml,
 } = await import("../src/lib/resume-model.ts");
 const { createDocx } = await import("../src/lib/docx-export.ts");
@@ -89,6 +91,23 @@ test("repairs duplicate and missing layout sections and keeps full-width content
   expect(all).not.toContain("unknown");
   expect(fixed.metadata.layout.pages[0].sidebar).toEqual([]);
 });
+test("Chinese template copies keep their independent template ID and locale", () => {
+  const blank = newResume("onyx-zh");
+  expect(blank.metadata.template).toBe("onyx-zh");
+  expect(blank.metadata.page.locale).toBe("zh-CN");
+  expect(newResume("onyx").metadata.page.locale).toBe("en-US");
+  expect(getSummarySectionName("zh-CN")).toBe("个人简介");
+  expect(getSectionName("experience", "zh-CN")).toBe("工作经历");
+
+  const sample = sampleResume("zh-CN");
+  expect(sample.metadata.template).toBe("onyx-zh");
+  expect(sample.basics.name).toBe("戴维·科瓦尔斯基");
+  expect(sample.summary.content).toContain("游戏开发工程师");
+  expect(sample.sections.experience.items[0].position).toBe("高级游戏开发工程师");
+  expect(sample.customSections.find((section) => section.type === "cover-letter").title).toBe("求职信");
+  expect(sanitizeResume(sample).metadata.template).toBe("onyx-zh");
+});
+
 test("allows blank draft entries to survive a round trip", () => {
   const d = newResume();
   d.sections.experience.items.push({
@@ -178,6 +197,20 @@ test("creates a real DOCX ZIP document", async () => {
   expect(bytes[0]).toBe(0x50);
   expect(bytes[1]).toBe(0x4b);
   expect(bytes.length).toBeGreaterThan(5000);
+});
+
+test("Chinese template copies export localized editable Word content", async () => {
+  const blob = await createDocx(sampleResume("zh-CN"));
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const { unzipSync } = await import("fflate");
+  const files = unzipSync(bytes);
+  const documentXml = new TextDecoder().decode(files["word/document.xml"]);
+  const stylesXml = new TextDecoder().decode(files["word/styles.xml"]);
+  expect(documentXml).toContain("个人简介");
+  expect(documentXml).toContain("工作经历");
+  expect(documentXml).toContain("游戏开发工程师");
+  expect(documentXml).toContain("求职信");
+  expect(stylesXml).toContain("Microsoft YaHei");
 });
 
 test("continuous flow removes all forced breaks and keeps cover letters in the same flow", async () => {

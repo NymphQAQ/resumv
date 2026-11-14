@@ -8,7 +8,8 @@ import {
   Table, TableRow, TableCell, WidthType, TableLayoutType, BorderStyle, VerticalAlign,
   ImageRun,
 } from "docx";
-import { cleanHtml, getResumeContactLinks, sectionNames, type ResumeData } from "./resume-model";
+import { cleanHtml, getResumeContactLinks, getSectionName, getSummarySectionName, type ResumeData } from "./resume-model";
+import { getBaseTemplateId } from "../vendor/reactive-resume/schema/templates";
 export async function createDocx(data: ResumeData): Promise<Blob> {
   const children: (Paragraph | Table)[] = [];
   const paragraph = (
@@ -115,7 +116,7 @@ export async function createDocx(data: ResumeData): Promise<Blob> {
       if (!data.summary.hidden && data.summary.content) {
         if (data.summary.showHeading !== false)
           children.push(
-            paragraph(data.summary.title || "Summary", HeadingLevel.HEADING_1),
+            paragraph(data.summary.title || getSummarySectionName(data.metadata.page.locale), HeadingLevel.HEADING_1),
           );
         children.push(...rich(data.summary.content));
       }
@@ -134,7 +135,7 @@ export async function createDocx(data: ResumeData): Promise<Blob> {
     if (section.showHeading !== false)
       children.push(
         paragraph(
-          section.title || sectionNames[id] || "Additional information",
+          section.title || getSectionName(id, data.metadata.page.locale),
           HeadingLevel.HEADING_1,
         ),
       );
@@ -187,9 +188,10 @@ export async function createDocx(data: ResumeData): Promise<Blob> {
   };
   const primary = data.metadata.design.colors.primary.replace("#", "");
   const letter = data.metadata.page.format === "letter";
-  const leftSidebar = ['azurill', 'ditto', 'ditgar', 'gengar', 'glalie', 'pikachu'].includes(data.metadata.template);
-  const hasColumns = leftSidebar || ['chikorita', 'leafish', 'onyx', 'kakuna', 'meowth'].includes(data.metadata.template);
-  const headerInSidebar = ['ditgar', 'gengar', 'glalie'].includes(data.metadata.template);
+  const template = getBaseTemplateId(data.metadata.template);
+  const leftSidebar = ['azurill', 'ditto', 'ditgar', 'gengar', 'glalie', 'pikachu'].includes(template);
+  const hasColumns = leftSidebar || ['chikorita', 'leafish', 'onyx', 'kakuna', 'meowth'].includes(template);
+  const headerInSidebar = ['ditgar', 'gengar', 'glalie'].includes(template);
   const pageWidth = letter ? 12240 : 11906;
   const contentWidth = Math.max(3000, pageWidth - data.metadata.page.marginX * 40);
   const sidebarWidth = Math.round(contentWidth * Math.min(50, Math.max(20, data.metadata.layout.sidebarWidth)) / 100);
@@ -229,8 +231,9 @@ export async function createDocx(data: ResumeData): Promise<Blob> {
         default: {
           document: {
             run: {
-              font:
-                data.metadata.typography.body.fontFamily === "Times-Roman"
+              font: /^zh(?:-|$)/i.test(data.metadata.page.locale)
+                ? "Microsoft YaHei"
+                : data.metadata.typography.body.fontFamily === "Times-Roman"
                   ? "Times New Roman"
                   : "Calibri",
               size: data.metadata.typography.body.fontSize * 2,

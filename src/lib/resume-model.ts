@@ -8,6 +8,7 @@ import { sampleResumeData } from "../vendor/reactive-resume/schema/resume/sample
 import samplePicture from "../vendor/reactive-resume/schema/resume/sample-picture.json";
 import { defaultResumeData } from "../vendor/reactive-resume/schema/resume/default";
 import { reactiveTemplates } from "../data/templates";
+import { translateSampleResumeToChinese } from "../data/chinese-sample";
 
 export type { ResumeData };
 export const STORAGE_KEY = "resumv.documents.v1";
@@ -35,6 +36,31 @@ export const sectionNames: Record<string, string> = {
   volunteer: "Volunteering",
   references: "References",
 };
+
+const chineseSectionNames: Record<string, string> = {
+  summary: "个人简介",
+  profiles: "个人资料",
+  experience: "工作经历",
+  education: "教育经历",
+  projects: "项目经历",
+  skills: "专业技能",
+  languages: "语言能力",
+  interests: "兴趣爱好",
+  awards: "荣誉奖项",
+  certifications: "证书",
+  publications: "出版成果",
+  volunteer: "志愿经历",
+  references: "推荐人",
+  "cover-letter": "求职信",
+};
+
+export const getSectionName = (id: string, locale = "en-US") =>
+  /^zh(?:-|$)/i.test(locale)
+    ? chineseSectionNames[id] ?? "其他信息"
+    : sectionNames[id] ?? "Additional information";
+
+export const getSummarySectionName = (locale = "en-US") =>
+  /^zh(?:-|$)/i.test(locale) ? chineseSectionNames.summary : sectionNames.summary;
 export const escapeHtml = (s: unknown) =>
   String(s ?? "").replace(
     /[&<>"']/g,
@@ -88,11 +114,12 @@ export function getResumeContactLinks(data: ResumeData) {
 
 export function newResume(template = "onyx"): ResumeData {
   const d = structuredClone(defaultResumeData);
-  d.metadata.template = (reactiveTemplates.find((t) => t.id === template)?.id ||
-    "onyx") as ResumeData["metadata"]["template"];
-  d.metadata.design.colors.primary = reactiveTemplates.find(
-    (t) => t.id === d.metadata.template,
-  )!.color;
+  const selectedTemplate = reactiveTemplates.find((t) => t.id === template);
+  d.metadata.template = (selectedTemplate?.id || "onyx") as ResumeData["metadata"]["template"];
+  d.metadata.page.locale = selectedTemplate?.language ?? "en-US";
+  d.metadata.design.colors.primary =
+    selectedTemplate?.color ??
+    reactiveTemplates.find((t) => t.id === "onyx")!.color;
   d.metadata.typography = {
     body: {
       fontFamily: "Lato",
@@ -128,15 +155,17 @@ export function newResume(template = "onyx"): ResumeData {
   ];
   return d;
 }
-export function sampleResume(): ResumeData {
+export function sampleResume(locale: "en-US" | "zh-CN" = "en-US"): ResumeData {
   const d = structuredClone(sampleResumeData);
-  // Keep upstream content; let resume sections flow across physical PDF pages.
+  // Keep the source sample structure and let sections flow across physical PDF pages.
   d.picture.url = samplePicture;
   d.metadata.template = "onyx";
+  d.metadata.page.locale = locale;
   d.metadata.typography.body.fontFamily = "Lato";
   d.metadata.typography.body.fontWeights = ["400", "700"];
   d.metadata.typography.heading.fontFamily = "Lato";
   d.metadata.typography.heading.fontWeights = ["700"];
+  if (locale === "zh-CN") translateSampleResumeToChinese(d);
   flowResumeSections(d);
   return parseResumeData(d);
 }
@@ -318,7 +347,7 @@ export function exportText(d: ResumeData): string {
             : d.customSections.find((s) => s.id === id);
         if (!s || s.hidden || !s.items.some((i) => !i.hidden)) return "";
         return [
-          s.title || sectionNames[id] || "Additional information",
+          s.title || getSectionName(id, d.metadata.page.locale),
           ...s.items
             .filter((i) => !i.hidden)
             .map((i) =>

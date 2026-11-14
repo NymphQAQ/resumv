@@ -1,6 +1,6 @@
 import type { SemanticNode, SemanticNodeKind } from "@reactive-resume/resume/stylesheet/types";
 import type { CustomSectionType, LayoutPage, ResumeData, SectionType } from "@reactive-resume/schema/resume/data";
-import type { Template } from "@reactive-resume/schema/templates";
+import { getBaseTemplateId, type Template } from "@reactive-resume/schema/templates";
 import type { HTMLElement, Node } from "node-html-parser";
 import type { StandardFieldRole } from "./binding-inventory";
 import type {
@@ -903,7 +903,7 @@ const addCombinedTextHosts = (
 		children = [...wrapCombinedFields(node.key, children, ["grade", "location"], "education-grade-location", "parent")];
 	}
 
-	if (node.kind === "item-header" && template !== "meowth") {
+	if (node.kind === "item-header" && getBaseTemplateId(template) !== "meowth") {
 		if (currentSectionType === "experience") {
 			children = [...wrapCombinedFields(node.key, children, ["location"], "experience-location")];
 			children = [...wrapCombinedFields(node.key, children, ["period"], "experience-period")];

@@ -1,4 +1,4 @@
-import type { Template } from "@reactive-resume/schema/templates";
+import { getBaseTemplateId, type Template } from "@reactive-resume/schema/templates";
 import type { TemplatePage } from "../document";
 import { AzurillPage } from "./azurill/AzurillPage";
 import { BronzorPage } from "./bronzor/BronzorPage";
@@ -36,7 +36,8 @@ export const templatePages: Partial<Record<Template, TemplatePage>> = {
 
 const defaultTemplatePage = AzurillPage;
 
-export const getTemplatePage = (template: Template): TemplatePage => templatePages[template] ?? defaultTemplatePage;
+export const getTemplatePage = (template: Template): TemplatePage =>
+  templatePages[getBaseTemplateId(template)] ?? defaultTemplatePage;
 
 export type { TemplateSemanticManifest } from "../semantic/template-manifest";
 export { getTemplateSemanticBindingRegistry, getTemplateSemanticManifest } from "../semantic/template-manifest";

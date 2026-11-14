@@ -10,6 +10,12 @@ Resumv 是基于 [Reactive Resume](https://github.com/reactive-resume/reactive-r
 
 [在线使用](https://resumv.com) · [开始制作简历](https://resumv.com/builder/) · [浏览模板](https://resumv.com/templates/) · [上游项目](https://github.com/reactive-resume/reactive-resume)
 
+## 最近更新
+
+- **新增中文模板副本**：15 种基础版式现均提供独立的简体中文版本。中文副本沿用对应英文版的布局和配色，并加载中文示例简历内容及章节标题。
+- **中文导出支持**：中文简历在 PDF、Word 和 Markdown 导出中使用对应的中文章节标题；Word 导出同时选择适合中文的字体。
+- **语言版本独立**：英文原版保持不变，每个中文副本拥有独立的模板 ID 和语言设置。
+
 ## 为什么选择 Resumv
 
 - **无需账户**：打开页面即可使用，不需要注册、登录或提供账户信息。
@@ -17,7 +23,7 @@ Resumv 是基于 [Reactive Resume](https://github.com/reactive-resume/reactive-r
 - **本地处理**：简历编辑、PDF 生成与预览、Word 和 Markdown 导出均在浏览器中完成。
 - **免费使用**：没有付费模板、订阅或导出付费门槛。
 - **支持自行部署**：静态站点，无需配置用户数据库、登录服务或 AI API Key。
-- **模板来源透明**：15 个简历模板来自 Reactive Resume，保留上游版权和许可证声明。
+- **模板来源透明**：15 种基础简历版式来自 Reactive Resume，每种均提供英文原版和独立的简体中文副本，共 30 款可选模板，并保留上游版权和许可证声明。
 
 ## 功能
 
@@ -30,9 +36,9 @@ Resumv 是基于 [Reactive Resume](https://github.com/reactive-resume/reactive-r
 - 实时 PDF 预览、自动分页、缩放和适应宽度。
 - 本地管理多份文档，使用 JSON 备份和恢复。
 
-模板包括 Onyx、Azurill、Bronzor、Chikorita、Ditgar、Ditto、Gengar、Glalie、Kakuna、Lapras、Leafish、Meowth、Pikachu、Rhyhorn 和 Scizor。部分模板经过本地布局优化，例如 Onyx、Kakuna、Meowth 调整为右侧栏双栏布局。
+基础版式包括 Onyx、Azurill、Bronzor、Chikorita、Ditgar、Ditto、Gengar、Glalie、Kakuna、Lapras、Leafish、Meowth、Pikachu、Rhyhorn 和 Scizor。每种版式均提供英文原版和简体中文副本，共 15 种版式、30 款可选模板。部分模板经过本地布局优化，例如 Onyx、Kakuna、Meowth 调整为右侧栏双栏布局。中文副本沿用对应英文版的布局与设计；模板卡片使用相同的版式预览图，进入编辑器后会加载中文示例内容。
 
-> 当前点击编辑器右侧的模板卡片，会加载缩略图对应的完整示例，包括文字、头像和设计。可通过撤销恢复切换前的内容；编辑个人简历前也可以先导出 JSON 备份。
+> 点击编辑器右侧的模板卡片，会加载对应语言版本的示例内容和设计。中文副本会加载中文示例文字与章节标题，同时保留对应英文版式。可通过撤销恢复切换前的内容；编辑个人简历前也可以先导出 JSON 备份。
 
 ### 下载与备份
 

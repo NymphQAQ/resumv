@@ -1,5 +1,6 @@
 import type { Style } from "@react-pdf/types";
 import type { ResumeData, StyleIntent, StyleRule, StyleSlot } from "@reactive-resume/schema/resume/data";
+import { getBaseTemplateId } from "@reactive-resume/schema/templates";
 import type { StylesheetSource } from "@reactive-resume/schema/resume/stylesheet";
 import { escapeCssComment, escapeCssString, serializeGeneratedStylesheet } from "@reactive-resume/resume/stylesheet";
 import { styleRulesSchema } from "@reactive-resume/schema/resume/data";
@@ -136,6 +137,7 @@ const textWeightSelector = (data: ResumeData, rule: StyleRule, base: string): st
 };
 
 const scizorBoldColorSelector = (data: ResumeData, rule: StyleRule, base: string): string | undefined => {
+	if (getBaseTemplateId(data.metadata.template) !== "scizor") return;
 	const sectionType =
 		rule.target.scope === "sectionType"
 			? rule.target.sectionType
@@ -144,10 +146,11 @@ const scizorBoldColorSelector = (data: ResumeData, rule: StyleRule, base: string
 				: undefined;
 	if (sectionType === "awards") return;
 
+	const templateSelector = escapeCssString(data.metadata.template);
 	const scopedBase =
 		rule.target.scope === "global"
-			? 'resume[template="scizor"] section:not([type="awards"])'
-			: `resume[template="scizor"] ${base}`;
+			? `resume[template=${templateSelector}] section:not([type="awards"])`
+			: `resume[template=${templateSelector}] ${base}`;
 	return ["company", "school", "name", "language", "network", "organization", "title"]
 		.map((name) => `${scopedBase}${slotSelectors.text}[role~="primary-text"][name=${escapeCssString(name)}]`)
 		.join(",\n");

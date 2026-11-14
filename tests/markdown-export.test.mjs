@@ -32,3 +32,16 @@ test('Markdown skips empty sections and respects heading visibility', () => {
   expect(markdown).not.toContain('## Projects');
   expect(markdown).toContain('Passionate game developer');
 });
+
+test('Chinese template copies export localized headings and sample content', () => {
+  const data = sampleResume('zh-CN');
+  const markdown = exportMarkdown(data);
+  expect(markdown).toStartWith('# 戴维·科瓦尔斯基');
+  expect(markdown).toContain('## 个人简介');
+  expect(markdown).toContain('## 工作经历');
+  expect(markdown).toContain('## 教育经历');
+  expect(markdown).toContain('## 求职信');
+  expect(markdown).toContain('游戏开发工程师');
+  expect(markdown).not.toContain('## Summary');
+  expect(markdown).not.toContain('## Experience');
+});

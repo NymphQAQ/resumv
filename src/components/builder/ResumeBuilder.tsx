@@ -316,6 +316,7 @@ export default function ResumeBuilder({
           if (template) {
             const design = newResume(template);
             d.metadata.template = design.metadata.template;
+            d.metadata.page.locale = design.metadata.page.locale;
             d.metadata.design.colors.primary = design.metadata.design.colors.primary;
           }
           name = `${roleLabels[example.slug] ?? example.title}简历`;
@@ -1442,9 +1443,9 @@ export default function ResumeBuilder({
               <>
                 <div className="settings-title">
                   <h3>模板</h3>
-                  <span>15 种版式</span>
+                  <span>30 款模板 · 15 种版式，中英文各一份</span>
                 </div>
-                <p className="b-hint">选用模板会载入图中的示例内容和照片，点击撤销可恢复原简历。</p>
+                <p className="b-hint">选用模板会载入对应语言的示例内容和照片，点击撤销可恢复原简历。中文版是英文原版的独立副本。</p>
                 <div className="builder-template-grid">
                   {reactiveTemplates.map((t) => (
                     <button
@@ -1456,7 +1457,7 @@ export default function ResumeBuilder({
                     >
                       <span className="template-thumb">
                         <img
-                          src={`/templates/${t.id}.jpg`}
+                          src={`/templates/${t.previewId}.jpg`}
                           alt={`${t.name} 模板预览`}
                           loading="lazy"
                         />

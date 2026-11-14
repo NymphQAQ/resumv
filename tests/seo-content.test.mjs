@@ -9,22 +9,45 @@ const { sanitizeResume, exportText } = await import('../src/lib/resume-model.ts'
 const { draftSummary } = await import('../src/lib/summary-generator.ts');
 const { createTemplateResume } = await import('../src/lib/template-resume.ts');
 const { reactiveTemplates } = await import('../src/data/templates.ts');
+const { getTemplatePage, getTemplateSemanticManifest } = await import('../src/vendor/reactive-resume/pdf/templates/index.ts');
 
-test('gallery presets retain the same content and design used to generate previews',()=>{
+test('gallery presets retain their original layouts and localized sample content',()=>{
  const manifest=JSON.parse(readFileSync('public/templates/preview-manifest.json','utf8'));
  for(const template of reactiveTemplates){
   const data=createTemplateResume(template.id);
-  const preview=manifest.items.find(p=>p.path===`/templates/${template.id}.jpg`);
-  expect(data.basics.name).toBe(preview.name);
-  expect(data.basics.headline).toBe(preview.headline);
+  const preview=manifest.items.find(p=>p.path===`/templates/${template.previewId}.jpg`);
+  expect(preview).toBeDefined();
+  if(template.language==='zh-CN'){
+   expect(data.basics.name).toBe('戴维·科瓦尔斯基');
+   expect(data.basics.headline).toContain('游戏开发工程师');
+   expect(data.metadata.page.locale).toBe('zh-CN');
+   expect(data.summary.content).toContain('专业经验');
+   expect(data.sections.experience.items[0].description).toContain('负责一款');
+  }else{
+   expect(data.basics.name).toBe(preview.name);
+   expect(data.basics.headline).toBe(preview.headline);
+   expect(data.metadata.page.locale).toBe('en-US');
+  }
   expect(data.metadata.template).toBe(template.id);
   expect(data.metadata.design.colors.primary).toBe(template.color);
-  expect(createTemplateResume(template.id,true).basics.name).toBe('');
+  const blank=createTemplateResume(template.id,true);
+  expect(blank.basics.name).toBe('');
+  expect(blank.metadata.template).toBe(template.id);
+  expect(blank.metadata.page.locale).toBe(template.language);
  }
  for(const role of examples){
   const preview=manifest.items.find(p=>p.path===`/templates/roles/${role.slug}.jpg`);
   expect(preview.headline).toBe(createRoleResume(role.slug).basics.headline);
   expect(preview.template).toBe(role.template);
+ }
+});
+
+test('Chinese variants reuse the matching English layout and semantic manifest',()=>{
+ for(const template of reactiveTemplates.filter(item=>item.language==='zh-CN')){
+  const baseId=template.id.replace(/-zh$/,'');
+  expect(getTemplatePage(template.id)).toBe(getTemplatePage(baseId));
+  expect(getTemplateSemanticManifest(template.id).template).toBe(template.id);
+  expect(getTemplateSemanticManifest(template.id).parts).toEqual(getTemplateSemanticManifest(baseId).parts);
  }
 });
 

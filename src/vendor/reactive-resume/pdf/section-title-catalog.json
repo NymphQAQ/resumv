@@ -832,18 +832,18 @@
 		"Cover Letter": "Thư xin việc"
 	},
 	"zh-CN": {
-		"Summary": "总结",
+		"Summary": "个人简介",
 		"Profiles": "个人资料",
 		"Experience": "工作经历",
 		"Education": "教育经历",
-		"Projects": "项目",
+		"Projects": "项目经历",
 		"Skills": "技能",
 		"Languages": "语言",
 		"Interests": "兴趣爱好",
 		"Awards": "奖项",
 		"Certifications": "证书",
 		"Publications": "出版物",
-		"Volunteer": "志愿者经历",
+		"Volunteer": "志愿经历",
 		"References": "推荐人",
 		"Cover Letter": "求职信"
 	},

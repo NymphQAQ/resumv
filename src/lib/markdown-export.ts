@@ -1,4 +1,4 @@
-import { cleanHtml, getResumeContactLinks, sectionNames, type ResumeData } from './resume-model';
+import { cleanHtml, getResumeContactLinks, getSectionName, getSummarySectionName, type ResumeData } from './resume-model';
 
 const escape = (text: string) => text.replace(/([\\`*_{}\[\]<>#!|~])/g, '\\$1');
 const link = (label: string, url: string) => /^(https?:\/\/|mailto:|tel:)/i.test(url)
@@ -41,7 +41,7 @@ export function exportMarkdown(data: ResumeData): string {
   for (const id of ids) {
     if (id === 'summary') {
       if (!data.summary.hidden && data.summary.content) {
-        if (data.summary.showHeading !== false) blocks.push(`## ${escape(data.summary.title || 'Summary')}`);
+        if (data.summary.showHeading !== false) blocks.push(`## ${escape(data.summary.title || getSummarySectionName(data.metadata.page.locale))}`);
         blocks.push(richMarkdown(data.summary.content));
       }
       continue;
@@ -52,7 +52,7 @@ export function exportMarkdown(data: ResumeData): string {
     if (!section || section.hidden) continue;
     const items = section.items.filter(item => !item.hidden);
     if (!items.length) continue;
-    if (section.showHeading !== false) blocks.push(`## ${escape(section.title || sectionNames[id] || 'Additional information')}`);
+    if (section.showHeading !== false) blocks.push(`## ${escape(section.title || getSectionName(id, data.metadata.page.locale))}`);
     for (const item of items) {
       const fields = item as unknown as Record<string, unknown>;
       const titleKey = ['company', 'school', 'name', 'title', 'language', 'network', 'organization'].find(key => fields[key]);

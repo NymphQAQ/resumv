@@ -1,6 +1,6 @@
 import type { SemanticNodeKind } from "@reactive-resume/resume/stylesheet/types";
 import type { CustomSectionType } from "@reactive-resume/schema/resume/data";
-import type { Template } from "@reactive-resume/schema/templates";
+import { getBaseTemplateId, type Template } from "@reactive-resume/schema/templates";
 import type { PrimitiveBinding, SemanticBindingRegistry } from "./binding-inventory";
 import { azurillSemanticManifest } from "../templates/azurill/semantic";
 import { bronzorSemanticManifest } from "../templates/bronzor/semantic";
@@ -146,10 +146,12 @@ const TEMPLATE_SEMANTIC_MANIFESTS = {
 	pikachu: pikachuSemanticManifest,
 	rhyhorn: rhyhornSemanticManifest,
 	scizor: scizorSemanticManifest,
-} as const satisfies Readonly<Record<Template, TemplateSemanticManifest>>;
+} as const satisfies Readonly<Record<Exclude<Template, `${string}-zh`>, TemplateSemanticManifest>>;
 
 export function getTemplateSemanticManifest(template: Template): TemplateSemanticManifest {
-	return TEMPLATE_SEMANTIC_MANIFESTS[template];
+	const baseTemplate = getBaseTemplateId(template);
+	const manifest = TEMPLATE_SEMANTIC_MANIFESTS[baseTemplate];
+	return baseTemplate === template ? manifest : { ...manifest, template };
 }
 
 export function getTemplateSemanticBindingRegistry(template: Template): SemanticBindingRegistry {

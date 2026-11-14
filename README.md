@@ -10,6 +10,12 @@ It is designed for people who value their privacy, prefer to keep their resumes 
 
 [Try Resumv](https://resumv.com) · [Build a resume](https://resumv.com/builder/) · [Browse templates](https://resumv.com/templates/) · [Upstream project](https://github.com/reactive-resume/reactive-resume)
 
+## Latest updates
+
+- **Chinese template copies:** All 15 base layouts now have independent Simplified Chinese variants. They retain the corresponding English layout and color scheme while loading localized sample resume content and section headings.
+- **Localized exports:** Chinese resumes use localized section headings in PDF, Word, and Markdown exports. Word exports also select a Chinese-capable font.
+- **Separate language variants:** English originals remain unchanged; each Chinese copy has its own template ID and language setting.
+
 ## Why Resumv?
 
 - **No account required:** Start immediately without registering, logging in, or sharing account information.
@@ -17,7 +23,7 @@ It is designed for people who value their privacy, prefer to keep their resumes 
 - **Browser-based processing:** Resume editing, PDF generation and preview, and Word and Markdown exports all run in your browser.
 - **Free to use:** No paid templates, subscriptions, or export paywalls.
 - **Easy to self-host:** A static site with no user database, authentication service, or AI API key to configure.
-- **Clear template attribution:** All 15 resume templates come from Reactive Resume, with upstream copyright and license notices preserved.
+- **Clear template attribution:** The 15 base resume layouts come from Reactive Resume. Each is available as an English original and an independent Simplified Chinese copy, for 30 selectable template variants in total; upstream copyright and license notices are preserved.
 
 ## Features
 
@@ -30,9 +36,9 @@ It is designed for people who value their privacy, prefer to keep their resumes 
 - Live PDF preview with automatic pagination, zoom, and fit-to-width controls.
 - Multiple locally saved documents, with JSON backup and restore.
 
-Available templates: Onyx, Azurill, Bronzor, Chikorita, Ditgar, Ditto, Gengar, Glalie, Kakuna, Lapras, Leafish, Meowth, Pikachu, Rhyhorn, and Scizor. Some layouts have been adapted for this project; Onyx, Kakuna, and Meowth use a two-column layout with a right sidebar.
+Available layouts: Onyx, Azurill, Bronzor, Chikorita, Ditgar, Ditto, Gengar, Glalie, Kakuna, Lapras, Leafish, Meowth, Pikachu, Rhyhorn, and Scizor. Each layout is available in English and as a Simplified Chinese copy (15 layouts, 30 selectable variants). Some layouts have been adapted for this project; Onyx, Kakuna, and Meowth use a two-column layout with a right sidebar. Chinese variants reuse the matching layout and design; their cards use the same layout preview while the editor loads Chinese sample content.
 
-> Selecting a template card on the right side of the editor currently loads the complete example shown in its thumbnail, including its text, photo, and design. Use Undo to restore your previous content. You can also export a JSON backup before making changes to your own resume.
+> Selecting a template card on the right side of the editor loads that variant's example content and design. Chinese variants load localized sample text and section names while preserving the corresponding English layout. Use Undo to restore your previous content. You can also export a JSON backup before making changes to your own resume.
 
 ### Downloads and backups
 
