@@ -8,7 +8,7 @@ import {
   Table, TableRow, TableCell, WidthType, TableLayoutType, BorderStyle, VerticalAlign,
   ImageRun,
 } from "docx";
-import { cleanHtml, sectionNames, type ResumeData } from "./resume-model";
+import { cleanHtml, getResumeContactLinks, sectionNames, type ResumeData } from "./resume-model";
 export async function createDocx(data: ResumeData): Promise<Blob> {
   const children: (Paragraph | Table)[] = [];
   const paragraph = (
@@ -97,6 +97,14 @@ export async function createDocx(data: ResumeData): Promise<Blob> {
         .join(" · "),
     ),
   );
+  for (const { text, link } of getResumeContactLinks(data)) {
+    header.push(link
+      ? new Paragraph({ children: [new ExternalHyperlink({
+        link,
+        children: [new TextRun({ text, style: "Hyperlink" })],
+      })], spacing: { after: 120 } })
+      : paragraph(text));
+  }
   const seen = new Set<string>();
   const renderSections = (ids: string[]) => {
   const children: Paragraph[] = [];

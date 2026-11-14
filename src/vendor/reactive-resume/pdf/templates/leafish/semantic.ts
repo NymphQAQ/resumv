@@ -9,7 +9,7 @@ export const leafishSemanticManifest = {
 		{ name: "sidebar", placement: "sidebar", origins: ["sidebar"] },
 	],
 	header: { region: "header", placement: "main" },
-	specialSummary: { region: "header", placement: "main", source: "always" },
+	specialSummary: { region: "header", placement: "main" },
 	parts: [
 		itemHeaderRowPart,
 		{

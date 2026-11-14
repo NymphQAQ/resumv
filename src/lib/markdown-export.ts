@@ -1,4 +1,4 @@
-import { cleanHtml, sectionNames, type ResumeData } from './resume-model';
+import { cleanHtml, getResumeContactLinks, sectionNames, type ResumeData } from './resume-model';
 
 const escape = (text: string) => text.replace(/([\\`*_{}\[\]<>#!|~])/g, '\\$1');
 const link = (label: string, url: string) => /^(https?:\/\/|mailto:|tel:)/i.test(url)
@@ -35,6 +35,7 @@ export function exportMarkdown(data: ResumeData): string {
     escape(data.basics.headline),
     [data.basics.email, data.basics.phone, data.basics.location].filter(Boolean).map(escape).join(' · '),
     data.basics.website.url ? link(data.basics.website.label, data.basics.website.url) : '',
+    ...getResumeContactLinks(data).map(({ text, link: url }) => link(text, url)),
   ];
   const ids = new Set(data.metadata.layout.pages.flatMap(page => [...page.main, ...page.sidebar]));
   for (const id of ids) {

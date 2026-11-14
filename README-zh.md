@@ -124,7 +124,7 @@ scripts/                     模板预览生成等辅助脚本
 tests/                       数据、导出和静态页面检查
 ```
 
-当前界面和默认字体主要面向英文及拉丁字母简历，尚未包含上游的多语言字体 CDN 回退能力。Reactive Resume v4 JSON 迁移也暂未支持。
+编辑器界面为英文。PDF 预览和导出内置 Noto Sans CJK 回退字体，支持简体和繁体中文。Reactive Resume v4 JSON 迁移暂未支持。
 
 ## 许可证
 
@@ -136,7 +136,7 @@ Resumv 采用 [MIT License](LICENSE)，版权归 2026 liusha-com 和 Resumv 贡�
 
 - Reactive Resume 代码采用 **MIT License**，原版权声明保留于 [上游许可证](src/vendor/reactive-resume/LICENSE)。
 - 所引用的上游版本记录在 [UPSTREAM_COMMIT](src/vendor/reactive-resume/UPSTREAM_COMMIT)。
-- TikTok Sans 和 Lato 字体使用 **SIL Open Font License**，许可文件位于 [public/licenses](public/licenses/)。
+- TikTok Sans、Lato 和 Noto Sans CJK 字体使用 **SIL Open Font License**，许可文件位于 [public/licenses](public/licenses/)。
 
 分发本项目所包含的第三方代码或字体时，请保留对应的版权与许可声明。
 

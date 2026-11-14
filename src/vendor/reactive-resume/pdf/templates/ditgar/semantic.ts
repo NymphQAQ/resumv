@@ -25,7 +25,7 @@ export const ditgarSemanticManifest = {
 		{ name: "main", placement: "main", origins: ["main"] },
 	],
 	header: { region: "header", placement: "sidebar" },
-	specialSummary: { region: "featured", placement: "main", source: "main-with-header" },
+	specialSummary: { region: "featured", placement: "main" },
 	parts: [
 		itemHeaderRowPart,
 		{

@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import type { SectionTitleResolver } from "./section-title";
 import { createContext, use, useMemo } from "react";
 import { isCJKLocale, isRTL } from "@reactive-resume/utils/locale";
-import { resumeContentContainsCJK } from "./hooks/use-register-fonts";
+import { resumeContentContainsChinese } from "./hooks/use-register-fonts";
 import { createHyphenationCallback } from "./hyphenation";
 
 export type ResumeRenderOptions = {
@@ -40,7 +40,7 @@ export const RenderProvider = ({
 			createHyphenationCallback({
 				locale: data.metadata.page.locale,
 				automatic: data.metadata.typography.hyphenation === true,
-				cjk: isCJKLocale(data.metadata.page.locale as Locale) || resumeContentContainsCJK(data),
+				cjk: isCJKLocale(data.metadata.page.locale as Locale) || resumeContentContainsChinese(data),
 			}),
 		[data],
 	);

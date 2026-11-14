@@ -21,6 +21,7 @@ const {
   readStorage,
   saveEnvelope,
   exportText,
+  getResumeContactLinks,
   cleanHtml,
 } = await import("../src/lib/resume-model.ts");
 const { createDocx } = await import("../src/lib/docx-export.ts");
@@ -114,6 +115,31 @@ test("text export omits hidden sections and empty headings", () => {
   expect(text).toContain("Volunteering");
   expect(text).toContain("David Kowalski");
   expect(text).toContain("Unity Certified Expert: Programmer");
+});
+
+test("contact links fall back to their URL and omit empty draft rows", () => {
+  const data = newResume();
+  data.basics.customFields = [
+    { id: "github", icon: "github-logo", text: "", link: " https://github.com/example " },
+    { id: "empty", icon: "link", text: "", link: "" },
+  ];
+  expect(getResumeContactLinks(data)).toEqual([
+    { id: "github", icon: "github-logo", text: "github.com/example", link: "https://github.com/example" },
+  ]);
+  expect(exportText(data)).toContain("https://github.com/example");
+});
+
+test("text export follows the saved section and entry order", () => {
+  const data = sampleResume();
+  const [page] = data.metadata.layout.pages;
+  page.main = ["skills", "summary"];
+  page.sidebar = [];
+  data.sections.skills.items.reverse();
+  writeResume(data, "ordered", "Ordered resume", "resume");
+  const saved = sanitizeResume(readStorage()[0].reactive);
+  const text = exportText(saved);
+  expect(text.indexOf("Performance Optimization")).toBeLessThan(text.indexOf("Unity Engine"));
+  expect(text.indexOf("Unity Engine")).toBeLessThan(text.indexOf("Passionate game developer"));
 });
 
 test("official sample retains all upstream content and survives saving with its portrait", async () => {

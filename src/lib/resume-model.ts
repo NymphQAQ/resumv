@@ -77,6 +77,15 @@ export function cleanHtml(html: string): string {
 }
 const safeUrl = (url: unknown) =>
   /^(https?:\/\/|mailto:|tel:)/i.test(String(url)) ? String(url) : "";
+
+export function getResumeContactLinks(data: ResumeData) {
+  return data.basics.customFields.flatMap((field) => {
+    const link = safeUrl(field.link.trim());
+    const text = field.text.trim() || link.replace(/^https?:\/\//i, "");
+    return text ? [{ ...field, text, link }] : [];
+  });
+}
+
 export function newResume(template = "onyx"): ResumeData {
   const d = structuredClone(defaultResumeData);
   d.metadata.template = (reactiveTemplates.find((t) => t.id === template)?.id ||
@@ -290,14 +299,19 @@ export function exportText(d: ResumeData): string {
   return [
     d.basics.name,
     d.basics.headline,
-    [d.basics.email, d.basics.phone, d.basics.location, d.basics.website.url]
+    [
+      d.basics.email,
+      d.basics.phone,
+      d.basics.location,
+      d.basics.website.url,
+    ]
       .filter(Boolean)
       .join(" · "),
-    !d.summary.hidden ? stripHtml(d.summary.content) : "",
+    ...getResumeContactLinks(d).map(({ text, link }) => link || text),
     ...d.metadata.layout.pages
       .flatMap((p) => [...p.main, ...p.sidebar])
-      .filter((id) => id !== "summary")
       .map((id) => {
+        if (id === "summary") return d.summary.hidden ? "" : stripHtml(d.summary.content);
         const s =
           id in d.sections
             ? d.sections[id as keyof ResumeData["sections"]]

@@ -15,7 +15,7 @@ import {
 	WebsiteContactItem,
 } from "../shared/contact-item";
 import { TemplateProvider } from "../shared/context";
-import { getFeaturedSummaryLayout } from "../shared/featured-summary";
+import { getFeaturedSummaryLayout, shouldFeatureSummary } from "../shared/featured-summary";
 import { filterSections } from "../shared/filtering";
 import { getTemplateMetrics } from "../shared/metrics";
 import { PageMarginBackground } from "../shared/page-margin-background";
@@ -78,7 +78,7 @@ export const DitgarPage = ({ page, pageSize, pageMinHeightStyle, showHeader, pag
 	const mainSections = useRenderedSectionIds(pageNodeKey, filterSections(page.main, data));
 	const { featuredSummarySection, regularSections: regularMainSections } = getFeaturedSummaryLayout({
 		sections: mainSections,
-		canFeatureSummary: showHeader,
+		canFeatureSummary: shouldFeatureSummary(showHeader, page.main),
 	});
 	const regularSidebarSections = featuredSummarySection
 		? sidebarSections.filter((section) => section !== "summary")

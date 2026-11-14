@@ -16,6 +16,7 @@ import { isRTL } from "@reactive-resume/utils/locale";
 import { getResumeSectionIcon } from "../section-icon";
 import { shouldUseSectionTimeline } from "../templates/shared/columns";
 import { getCustomFieldLinkUrl } from "../templates/shared/contact";
+import { shouldFeatureSummary } from "../templates/shared/featured-summary";
 import { filterItems, filterSections } from "../templates/shared/filtering";
 import { hasTemplatePicture } from "../templates/shared/picture";
 import { parseNormalizedRichTextHtml, richTextMarkClassName } from "../templates/shared/rich-text-html";
@@ -927,23 +928,20 @@ export function buildSemanticTree({
 	const manifest = getTemplateSemanticManifest(template);
 	const mainSections = filterSections(page.main, data);
 	const sidebarSections = page.fullWidth ? [] : filterSections(page.sidebar, data);
-	const featuredSummary =
-		manifest.specialSummary?.source === "main-with-header" && showHeader && mainSections.includes("summary");
-	const headerSummary =
-		manifest.specialSummary?.source === "always" && showHeader && filterSections(["summary"], data).includes("summary");
-	const removeSummary = featuredSummary || manifest.specialSummary?.source === "always";
+	const specialSummary =
+		shouldFeatureSummary(showHeader, page.main) && mainSections.includes("summary") ? manifest.specialSummary : null;
 	const sectionsByOrigin = {
-		main: removeSummary ? mainSections.filter((section) => section !== "summary") : mainSections,
-		sidebar: removeSummary ? sidebarSections.filter((section) => section !== "summary") : sidebarSections,
+		main: specialSummary ? mainSections.filter((section) => section !== "summary") : mainSections,
+		sidebar: sidebarSections,
 	} satisfies Readonly<Record<TemplateSemanticPlacement, readonly string[]>>;
 	const regions = manifest.regions.flatMap((region) => {
 		if (region.name === "header") {
 			if (!showHeader) return [];
-			const summary = headerSummary
+			const summary = specialSummary?.region === "header"
 				? buildSection({
 						data,
 						sectionId: "summary",
-						placement: manifest.specialSummary?.placement ?? "main",
+						placement: specialSummary.placement,
 						origin: "main",
 						regionKey: semanticNodeKeys.region(pageKey, "header"),
 						keyIncludesOrigin: false,
@@ -955,7 +953,7 @@ export function buildSemanticTree({
 		}
 
 		if (region.name === "featured") {
-			if (!featuredSummary) return [];
+			if (specialSummary?.region !== "featured") return [];
 			return [
 				buildRegion({
 					data,

@@ -9,7 +9,7 @@ The PDF rendering templates, schema, rendering support, and complete sample resu
 The 15 style previews are generated locally from this upstream sample (David Kowalski), with all sections and automatic continuous pagination, including the cover letter. Local Lato fonts replace the upstream font families. Template selection changes only the template ID and accent color. Role-specific SEO examples are separate Resumv content and are not attributed to the upstream sample.
 
 Local modifications:
-- Font registration uses locally bundled Lato plus built-in PDF fonts to avoid runtime font service requests.
+- Font registration uses locally bundled Lato and Noto Sans CJK plus built-in PDF fonts. The Chinese fallback uses static regular and bold subsets from [Noto Sans CJK SC 2.004](https://github.com/notofonts/noto-cjk/tree/Sans2.004/Sans), with its license in `public/licenses/noto-sans-cjk.txt`. The WOFF2 files preserve the original TrueType table structure (`--no-glyf-transform` with fonttools) so fontkit can embed the glyph outlines in the exported PDF.
 - Package import aliases resolve to this directory from Astro/Vite.
 - Required text fields allow empty strings so unfinished browser drafts can be saved and reloaded.
 - Browser data is validated and sanitized by src/lib/resume-model.ts before reaching the renderer.

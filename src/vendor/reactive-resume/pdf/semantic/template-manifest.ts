@@ -32,7 +32,6 @@ export type TemplateSemanticRegion = {
 type TemplateSemanticSpecialSummary = {
 	region: "header" | "featured";
 	placement: TemplateSemanticPlacement;
-	source: "always" | "main-with-header";
 };
 
 type TemplateSemanticPartOwner =

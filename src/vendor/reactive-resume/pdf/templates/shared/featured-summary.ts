@@ -3,6 +3,9 @@ type FeaturedSummaryLayoutInput = {
 	canFeatureSummary: boolean;
 };
 
+export const shouldFeatureSummary = (showHeader: boolean, main: readonly string[]) =>
+	showHeader && main[0] === "summary";
+
 type FeaturedSummaryLayout = {
 	featuredSummarySection: "summary" | undefined;
 	regularSections: string[];

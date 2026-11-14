@@ -65,9 +65,11 @@ import { flowResumeSections } from "../../lib/resume-flow";
 import { exportMarkdown } from "../../lib/markdown-export";
 import ResumeCanvas from "./ResumeCanvas";
 import RichText from "./RichText";
+import { useReorderDrag } from "./useReorderDrag";
 import "../../styles/builder.css";
 
 type SectionKey = keyof ResumeData["sections"];
+type LayoutColumn = "main" | "sidebar";
 const icons: Record<string, typeof UserRound> = {
   basics: UserRound,
   summary: FileText,
@@ -239,6 +241,7 @@ export default function ResumeBuilder({
   const [previewStatus, setPreviewStatus] = useState("Preparing preview");
   const [blob, setBlob] = useState<Blob | null>(null);
   const [zoom, setZoom] = useState(75);
+  const previewWidth = (794 * zoom) / 100;
   const [sample, setSample] = useState(false);
   const [ready, setReady] = useState(false);
   const [fatal, setFatal] = useState("");
@@ -255,11 +258,8 @@ export default function ResumeBuilder({
   const canvas = useRef<HTMLDivElement>(null);
   const inputFile = useRef<HTMLInputElement>(null);
   const photoFile = useRef<HTMLInputElement>(null);
-  const dragging = useRef<{
-    page: number;
-    column: "main" | "sidebar";
-    id: string;
-  } | null>(null);
+  const sectionDrag = useReorderDrag("layout");
+  const entryDrag = useReorderDrag(active);
   const msgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const snapshotTime = useRef(0);
   const notify = useCallback((msg: string) => {
@@ -585,6 +585,31 @@ export default function ResumeBuilder({
       const s = changeSection(d) as any;
       s.items[index][key] = value;
     });
+  const moveEntry = (entryId: string, slot: number) => {
+    const from = items.findIndex((item) => item.id === entryId);
+    const to = from < slot ? slot - 1 : slot;
+    if (from < 0 || from === to || to < 0 || to >= items.length) return;
+    update((draft) => {
+      const list = (changeSection(draft) as { items: typeof items }).items;
+      const [entry] = list.splice(from, 1);
+      list.splice(to, 0, entry);
+    }, true);
+  };
+  const moveSection = (sectionId: string, pageIndex: number, column: LayoutColumn, to: number) => {
+    const pages = data.metadata.layout.pages;
+    const fromPage = pages.findIndex((page) => page.main.includes(sectionId) || page.sidebar.includes(sectionId));
+    if (fromPage === -1) return;
+    const fromColumn = pages[fromPage].main.includes(sectionId) ? "main" : "sidebar";
+    const from = pages[fromPage][fromColumn].indexOf(sectionId);
+    const sameColumn = fromPage === pageIndex && fromColumn === column;
+    const index = sameColumn && from < to ? to - 1 : to;
+    if (sameColumn && from === index) return;
+    update((draft) => {
+      const pages = draft.metadata.layout.pages;
+      pages[fromPage][fromColumn].splice(from, 1);
+      pages[pageIndex][column].splice(index, 0, sectionId);
+    }, true);
+  };
   const sectionLinks = [
     "basics",
     "summary",
@@ -740,6 +765,17 @@ export default function ResumeBuilder({
           </div>
           <div className="content-panel-body">
             <div className="section-navigation">
+              <button
+                className="section-order-button"
+                onClick={() => {
+                  setRightOpen(true);
+                  setSettings("layout");
+                  setMobile("design");
+                }}
+              >
+                <Columns2 size={16} />
+                Reorder sections
+              </button>
               {sectionLinks.map((key) => {
                 const s =
                   key === "summary"
@@ -907,6 +943,57 @@ export default function ResumeBuilder({
                       })
                     }
                   />
+                  <div className="contact-links">
+                    <h4>Additional contact links</h4>
+                    {data.basics.customFields.map((field, index) => {
+                      const label = field.icon === "github-logo" || /^https?:\/\/github\.com(?:\/|$)/i.test(field.link.trim())
+                        ? "GitHub"
+                        : `Contact link ${index + 1}`;
+                      return (
+                        <div key={field.id} className="contact-link-fields">
+                          <Field
+                            label={`${label} URL`}
+                            type="url"
+                            value={field.link}
+                            placeholder={label === "GitHub" ? "https://github.com/username" : "https://example.com"}
+                            onChange={(value) => update((draft) => {
+                              const link = draft.basics.customFields[index];
+                              const previousUrl = link.link.trim();
+                              if (link.text === previousUrl || link.text === previousUrl.replace(/^https?:\/\//i, "")) {
+                                link.text = "";
+                              }
+                              link.link = value;
+                            })}
+                          />
+                          <Field
+                            label={`${label} display text (optional)`}
+                            value={field.text}
+                            onChange={(value) => update((draft) => {
+                              draft.basics.customFields[index].text = value;
+                            })}
+                          />
+                          <button
+                            type="button"
+                            className="remove-contact-link"
+                            aria-label={`Remove ${label}`}
+                            onClick={() => update((draft) => {
+                              draft.basics.customFields.splice(index, 1);
+                            }, true)}
+                          >
+                            <Trash2 size={14} /> Remove link
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button type="button" className="b-add" onClick={() => {
+                      const id = makeId();
+                      update((draft) => {
+                        draft.basics.customFields.push({ id, icon: "link", text: "", link: "" });
+                      }, true);
+                    }}>
+                      <Plus size={15} /> Add a contact link
+                    </button>
+                  </div>
                   {data.picture.url && (
                     <>
                       <Range
@@ -970,41 +1057,79 @@ export default function ResumeBuilder({
                             key={item.id}
                             className={`entry-card ${item.hidden ? "entry-hidden" : ""}`}
                           >
-                            <button
-                              className="entry-heading"
-                              aria-expanded={expanded === item.id}
-                              onClick={() =>
-                                setExpanded(
-                                  expanded === item.id ? null : item.id,
-                                )
-                              }
-                            >
-                              <span>
-                                <strong>
-                                  {item.company ||
-                                    item.school ||
-                                    item.name ||
-                                    item.title ||
-                                    item.language ||
-                                    item.network ||
-                                    item.organization ||
-                                    `Entry ${i + 1}`}
-                                </strong>
-                                <small>
-                                  {item.position ||
-                                    item.degree ||
-                                    item.period ||
-                                    item.proficiency ||
-                                    item.fluency ||
-                                    ""}
-                                </small>
-                              </span>
-                              {expanded === item.id ? (
-                                <ChevronDown size={15} />
-                              ) : (
-                                <ChevronRight size={15} />
+                            <div
+                              className="entry-bar"
+                              data-reorder-row
+                              {...entryDrag.dropTarget(item.id, item.id, (sourceId, edge) =>
+                                moveEntry(sourceId, i + (edge === "after" ? 1 : 0)),
                               )}
-                            </button>
+                            >
+                              {items.length > 1 && (
+                                <span
+                                  className="reorder-handle"
+                                  title="Drag to reorder entry"
+                                  aria-hidden="true"
+                                  {...entryDrag.handle(item.id)}
+                                >
+                                  <GripVertical size={15} />
+                                </span>
+                              )}
+                              <button
+                                className="entry-heading"
+                                aria-expanded={expanded === item.id}
+                                onClick={() =>
+                                  setExpanded(
+                                    expanded === item.id ? null : item.id,
+                                  )
+                                }
+                              >
+                                <span>
+                                  <strong>
+                                    {item.company ||
+                                      item.school ||
+                                      item.name ||
+                                      item.title ||
+                                      item.language ||
+                                      item.network ||
+                                      item.organization ||
+                                      `Entry ${i + 1}`}
+                                  </strong>
+                                  <small>
+                                    {item.position ||
+                                      item.degree ||
+                                      item.period ||
+                                      item.proficiency ||
+                                      item.fluency ||
+                                      ""}
+                                  </small>
+                                </span>
+                                {expanded === item.id ? (
+                                  <ChevronDown size={15} />
+                                ) : (
+                                  <ChevronRight size={15} />
+                                )}
+                              </button>
+                              {items.length > 1 && (
+                                <div className="reorder-arrows">
+                                  <button
+                                    title="Move entry up"
+                                    aria-label={`Move entry ${i + 1} up`}
+                                    disabled={i === 0}
+                                    onClick={() => moveEntry(item.id, i - 1)}
+                                  >
+                                    <ArrowUp size={14} />
+                                  </button>
+                                  <button
+                                    title="Move entry down"
+                                    aria-label={`Move entry ${i + 1} down`}
+                                    disabled={i === items.length - 1}
+                                    onClick={() => moveEntry(item.id, i + 2)}
+                                  >
+                                    <ArrowDown size={14} />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                             {expanded === item.id && (
                               <div className="entry-fields">
                                 {(fields[itemType] || []).map(
@@ -1071,40 +1196,6 @@ export default function ResumeBuilder({
                                   />
                                 )}
                                 <div className="entry-actions">
-                                  <button
-                                    title="Move entry up"
-                                    aria-label="Move entry up"
-                                    disabled={i === 0}
-                                    onClick={() =>
-                                      update((d) => {
-                                        const list = (changeSection(d) as any)
-                                          .items;
-                                        [list[i - 1], list[i]] = [
-                                          list[i],
-                                          list[i - 1],
-                                        ];
-                                      }, true)
-                                    }
-                                  >
-                                    <ArrowUp size={14} />
-                                  </button>
-                                  <button
-                                    title="Move entry down"
-                                    aria-label="Move entry down"
-                                    disabled={i === items.length - 1}
-                                    onClick={() =>
-                                      update((d) => {
-                                        const list = (changeSection(d) as any)
-                                          .items;
-                                        [list[i], list[i + 1]] = [
-                                          list[i + 1],
-                                          list[i],
-                                        ];
-                                      }, true)
-                                    }
-                                  >
-                                    <ArrowDown size={14} />
-                                  </button>
                                   <button
                                     title="Duplicate entry"
                                     aria-label="Duplicate entry"
@@ -1271,9 +1362,9 @@ export default function ResumeBuilder({
           <div className="canvas-scroll">
             <div
               className="canvas-paper-width"
-              style={{ width: `${(794 * zoom) / 100}px` }}
+              style={{ width: `${previewWidth}px` }}
             >
-              <ResumeCanvas data={data} onBlob={onBlob} onStatus={onStatus} />
+              <ResumeCanvas data={data} width={previewWidth} onBlob={onBlob} onStatus={onStatus} />
             </div>
             <div className="canvas-end">
               Crafted by you. Ready for what’s next.
@@ -1618,8 +1709,7 @@ export default function ResumeBuilder({
                 </button>
                 <p className="b-hint">Let all sections, including cover letters, fill the available space. A new sheet starts only when the content reaches the bottom.</p>
                 <p className="b-hint">
-                  Drag sections to reorder or move between columns. Arrow
-                  buttons work with a keyboard.
+                  Drag the handles to reorder sections or move them between columns. You can also use the arrow buttons.
                 </p>
                 <Range
                   label="Sidebar width"
@@ -1659,21 +1749,9 @@ export default function ResumeBuilder({
                         <div
                           className="layout-column"
                           key={col}
-                          onDragOver={(e) => e.preventDefault()}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            const source = dragging.current;
-                            if (!source) return;
-                            update((d) => {
-                              const old =
-                                d.metadata.layout.pages[source.page][
-                                  source.column
-                                ];
-                              old.splice(old.indexOf(source.id), 1);
-                              d.metadata.layout.pages[pi][col].push(source.id);
-                            }, true);
-                            dragging.current = null;
-                          }}
+                          {...sectionDrag.dropTarget(`${pi}:${col}`, undefined, (sourceId) =>
+                            moveSection(sourceId, pi, col, page[col].length),
+                          )}
                         >
                           <h5>{col === "main" ? "Main column" : "Sidebar"}</h5>
                           {page[col].map((sid, index) => {
@@ -1685,79 +1763,51 @@ export default function ResumeBuilder({
                                   : data.customSections.find(
                                       (x) => x.id === sid,
                                     );
+                            const label = s?.title || sectionNames[sid] || "Custom section";
+                            const otherColumn = col === "main" ? "sidebar" : "main";
                             return (
                               <div
                                 className="layout-row"
                                 key={sid}
-                                draggable
-                                onDragStart={() => {
-                                  dragging.current = {
-                                    page: pi,
-                                    column: col,
-                                    id: sid,
-                                  };
-                                }}
-                                onDragOver={(e) => e.preventDefault()}
-                                onDrop={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  const source = dragging.current;
-                                  if (!source || source.id === sid) return;
-                                  update((d) => {
-                                    const list =
-                                      d.metadata.layout.pages[source.page][
-                                        source.column
-                                      ];
-                                    list.splice(list.indexOf(source.id), 1);
-                                    const dest =
-                                      d.metadata.layout.pages[pi][col];
-                                    dest.splice(
-                                      dest.indexOf(sid),
-                                      0,
-                                      source.id,
-                                    );
-                                  }, true);
-                                  dragging.current = null;
-                                }}
+                                data-reorder-row
+                                {...sectionDrag.dropTarget(sid, sid, (sourceId, edge) =>
+                                  moveSection(sourceId, pi, col, index + (edge === "after" ? 1 : 0)),
+                                )}
                               >
-                                <GripVertical size={13} />
-                                <span>
-                                  {s?.title ||
-                                    sectionNames[sid] ||
-                                    "Custom section"}
-                                </span>
-                                <button
-                                  aria-label={`Move ${sectionNames[sid] || "section"} up`}
-                                  disabled={index === 0}
-                                  onClick={() =>
-                                    update((d) => {
-                                      const list =
-                                        d.metadata.layout.pages[pi][col];
-                                      [list[index - 1], list[index]] = [
-                                        list[index],
-                                        list[index - 1],
-                                      ];
-                                    }, true)
-                                  }
+                                <span
+                                  className="reorder-handle"
+                                  title="Drag to reorder section"
+                                  aria-hidden="true"
+                                  {...sectionDrag.handle(sid)}
                                 >
-                                  <ArrowUp size={12} />
-                                </button>
+                                  <GripVertical size={15} />
+                                </span>
+                                <span className="layout-row-title">{label}</span>
+                                <div className="reorder-arrows">
+                                  <button
+                                    title="Move section up"
+                                    aria-label={`Move ${label} up`}
+                                    disabled={index === 0}
+                                    onClick={() => moveSection(sid, pi, col, index - 1)}
+                                  >
+                                    <ArrowUp size={14} />
+                                  </button>
+                                  <button
+                                    title="Move section down"
+                                    aria-label={`Move ${label} down`}
+                                    disabled={index === page[col].length - 1}
+                                    onClick={() => moveSection(sid, pi, col, index + 2)}
+                                  >
+                                    <ArrowDown size={14} />
+                                  </button>
+                                </div>
                                 {!page.fullWidth && (
                                   <button
-                                    aria-label={`Move ${sectionNames[sid] || "section"} to ${col === "main" ? "sidebar" : "main column"}`}
-                                    onClick={() =>
-                                      update((d) => {
-                                        const p = d.metadata.layout.pages[pi];
-                                        p[col] = p[col].filter(
-                                          (x) => x !== sid,
-                                        );
-                                        p[
-                                          col === "main" ? "sidebar" : "main"
-                                        ].push(sid);
-                                      }, true)
-                                    }
+                                    title="Move to the other column"
+                                    aria-label={`Move ${label} to ${otherColumn === "sidebar" ? "sidebar" : "main column"}`}
+                                    onClick={() => moveSection(sid, pi, otherColumn, page[otherColumn].length)}
                                   >
-                                    <Columns2 size={12} />
+                                    <Columns2 size={14} />
                                   </button>
                                 )}
                               </div>

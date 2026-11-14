@@ -15,9 +15,8 @@ const germanWord = /^([("'„“«‹]*)([\p{Script=Latin}][\p{Script=Latin}\p{M
 export function createHyphenationCallback({ locale, automatic, cjk }: HyphenationOptions) {
 	const german = automatic && /^de(?:-|$)/i.test(locale);
 	return (word: string): string[] => {
-		if (cjk) {
-			if (word === " ") return ["\u200C "];
-			if (cjkLetterRegex.test(word)) return [...word].flatMap((letter) => [letter, ""]);
+		if (cjk && cjkLetterRegex.test(word)) {
+			return [...word].flatMap((letter) => [letter, ""]);
 		}
 		if (!german) return [word];
 		if (word.includes("\u00AD")) {

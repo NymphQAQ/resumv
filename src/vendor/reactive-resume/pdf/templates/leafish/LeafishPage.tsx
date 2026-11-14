@@ -1,5 +1,6 @@
 import type { Style } from "@react-pdf/types";
 import type { TemplatePageProps } from "../../document";
+import { shouldFeatureSummary } from "../shared/featured-summary";
 import type { TemplateColorRoles, TemplateStyleContext, TemplateStyleSlots } from "../shared/types";
 import { useMemo } from "react";
 import { Page, StyleSheet, View } from "#react-pdf-renderer";
@@ -55,6 +56,7 @@ type LeafishTemplate = {
 
 type LeafishHeaderProps = {
 	styles: LeafishStyles;
+	showSummary: boolean;
 };
 
 export const LeafishPage = ({ page, pageSize, pageMinHeightStyle, showHeader, pageNumber }: TemplatePageProps) => {
@@ -64,13 +66,14 @@ export const LeafishPage = ({ page, pageSize, pageMinHeightStyle, showHeader, pa
 	const { metadata } = data;
 	const { colors, styles } = useLeafishTemplate();
 	const metrics = getTemplateMetrics(metadata.page);
+	const showSummary = shouldFeatureSummary(showHeader, page.main);
 	const mainSections = useRenderedSectionIds(
 		pageNodeKey,
-		filterSections(page.main, data).filter((section) => section !== "summary"),
+		filterSections(page.main, data).filter((section) => !showSummary || section !== "summary"),
 	);
 	const sidebarSections = useRenderedSectionIds(
 		pageNodeKey,
-		filterSections(page.sidebar, data).filter((section) => section !== "summary"),
+		filterSections(page.sidebar, data),
 	);
 
 	return (
@@ -85,7 +88,7 @@ export const LeafishPage = ({ page, pageSize, pageMinHeightStyle, showHeader, pa
 			)}
 		>
 			<TemplateProvider pageNodeKey={pageNodeKey} styles={styles} colors={colors}>
-				{showHeader && <Header styles={styles} />}
+				{showHeader && <Header styles={styles} showSummary={showSummary} />}
 
 				<View style={composeStyles(styles.body, showHeader ? undefined : { paddingTop: 0 })}>
 					<SemanticRegionView region="main" style={composeStyles(styles.mainColumn, { rowGap: metrics.sectionGap })}>
@@ -113,7 +116,7 @@ export const LeafishPage = ({ page, pageSize, pageMinHeightStyle, showHeader, pa
 	);
 };
 
-const Header = ({ styles }: LeafishHeaderProps) => {
+const Header = ({ styles, showSummary }: LeafishHeaderProps) => {
 	const { basics, picture } = useRender();
 	const hasPicture = hasTemplatePicture(picture);
 
@@ -129,7 +132,7 @@ const Header = ({ styles }: LeafishHeaderProps) => {
 							<Text>{basics.headline}</Text>
 						</View>
 
-						<Section section="summary" placement="main" showHeading={false} />
+						{showSummary && <Section section="summary" placement="main" showHeading={false} />}
 					</View>
 				</SemanticTemplatePartView>
 			</SemanticTemplatePartView>

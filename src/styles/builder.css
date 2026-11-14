@@ -267,13 +267,20 @@
   padding: 0 4px;
   border-radius: 3px;
 }
-.add-section-button {
+.add-section-button,
+.section-order-button {
   grid-column: 1/-1;
   color: #9699a4;
   gap: 6px;
   font-size: 11px;
   justify-content: flex-start !important;
   padding: 11px 8px;
+}
+.section-order-button {
+  color: #6c7583;
+}
+.section-order-button:hover {
+  color: #dd2950;
 }
 .section-editor {
   padding: 20px 24px 28px;
@@ -669,12 +676,55 @@
 .entry-card.entry-hidden {
   opacity: 0.65;
 }
+.entry-bar {
+  display: flex;
+  align-items: center;
+  padding-inline: 4px;
+}
 .entry-heading {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   justify-content: space-between !important;
   gap: 8px;
   text-align: left;
   padding: 12px;
+}
+.entry-bar:has(.reorder-handle) .entry-heading {
+  padding-inline-start: 4px;
+}
+.reorder-handle {
+  display: inline-grid;
+  flex: 0 0 24px;
+  place-items: center;
+  min-height: 32px;
+  color: #727989;
+  cursor: grab;
+  user-select: none;
+}
+.reorder-handle:active {
+  cursor: grabbing;
+}
+.reorder-arrows {
+  display: flex;
+  flex-shrink: 0;
+}
+.reorder-arrows button,
+.layout-row > button {
+  width: 26px;
+  min-height: 32px;
+  color: #687181;
+  border-radius: 4px;
+}
+.reorder-arrows button:not(:disabled):hover,
+.layout-row > button:hover {
+  background: #fff0f3;
+  color: #ba2445;
+}
+[data-reorder-row][data-drop-edge="before"] {
+  box-shadow: inset 0 2px var(--b-pink);
+}
+[data-reorder-row][data-drop-edge="after"] {
+  box-shadow: inset 0 -2px var(--b-pink);
 }
 .entry-heading > span {
   min-width: 0;
@@ -714,6 +764,18 @@
 .entry-actions .delete-entry {
   margin-left: auto;
   color: #d2536c;
+}
+.contact-link-fields {
+  border: 1px solid #e6e8ed;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.remove-contact-link {
+  min-height: 28px;
+  gap: 6px;
+  color: #ba2445;
+  font-size: 12px;
 }
 .b-add {
   border: 1px dashed #dce0e7;
@@ -852,26 +914,34 @@
   color: #a0a5af;
   margin: 0 0 7px;
 }
+.layout-column[data-drop-edge] {
+  border-color: var(--b-pink);
+}
 .layout-row {
   display: flex;
   align-items: center;
   gap: 5px;
   border: 1px solid #e8ebef;
-  padding: 7px 5px;
+  padding: 2px 4px;
   background: white;
   border-radius: 4px;
   margin-bottom: 5px;
   color: #949aa6;
-  cursor: grab;
 }
-.layout-row > span {
+.layout-row-title {
   font-size: 11px;
   color: #6c7583;
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
-.layout-row > button {
-  color: #a2a9b4;
-  padding: 3px;
+
+@media (pointer: coarse) {
+  .reorder-arrows button,
+  .layout-row > button {
+    width: 34px;
+    min-height: 38px;
+  }
 }
 .export-option {
   display: flex;

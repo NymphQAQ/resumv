@@ -124,7 +124,7 @@ scripts/                    Utilities such as template preview generation
 tests/                      Data, export, and static page checks
 ```
 
-The current interface and default fonts primarily support English and Latin-script resumes. Upstream multilingual font CDN fallbacks are not included. Migration from Reactive Resume v4 JSON is also not supported yet.
+The editor interface is in English. PDF previews and exports use a bundled Noto Sans CJK fallback for Simplified and Traditional Chinese text. Migration from Reactive Resume v4 JSON is also not supported yet.
 
 ## License
 
@@ -136,7 +136,7 @@ Thank you to [Reactive Resume](https://github.com/reactive-resume/reactive-resum
 
 - Reactive Resume code is licensed under the **MIT License**. Its original copyright notice is preserved in the [upstream license](src/vendor/reactive-resume/LICENSE).
 - The vendored upstream revision is recorded in [UPSTREAM_COMMIT](src/vendor/reactive-resume/UPSTREAM_COMMIT).
-- TikTok Sans and Lato use the **SIL Open Font License**. Their license files are in [public/licenses](public/licenses/).
+- TikTok Sans, Lato, and Noto Sans CJK use the **SIL Open Font License**. Their license files are in [public/licenses](public/licenses/).
 
 Preserve the relevant copyright and license notices when distributing third-party code or fonts included in this project.
 
